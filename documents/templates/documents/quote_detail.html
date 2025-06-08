@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="quote-container">
+    <p><a href="{% url 'documents:quote_list' %}" class="btn btn-outline-secondary btn-sm mb-4">&laquo; Retour à la liste des devis</a></p>
+
+    <div class="quote-header">
+        <h1 class="display-5">Devis N° {{ quote.quote_number }}</h1>
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <p><strong>Date d'émission :</strong> {{ quote.issue_date|date:"d/m/Y" }}</p>
+                <p><strong>Date d'expiration :</strong> {{ quote.expiry_date|date:"d/m/Y" }}</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p><strong>Statut :</strong> 
+                    {% if quote.status == 'Accepté' %}
+                        <span class="badge bg-success fs-6">{{ quote.get_status_display }}</span>
+                    {% elif quote.status == 'Refusé' or quote.status == 'Expiré' %}
+                        <span class="badge bg-danger fs-6">{{ quote.get_status_display }}</span>
+                    {% elif quote.status == 'Envoyé' %}
+                        <span class="badge bg-warning text-dark fs-6">{{ quote.get_status_display }}</span>
+                    {% elif quote.status == 'Converti' %}
+                        <span class="badge bg-primary fs-6">{{ quote.get_status_display }}</span>
+                    {% else %}
+                        <span class="badge bg-info text-dark fs-6">{{ quote.get_status_display }}</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <h2 class="h4">Client</h2>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ quote.client.nom }}</h5>
+                    <p class="card-text">
+                        {{ quote.client.adresse_ligne1 }}{% if quote.client.adresse_ligne2 %}, {{ quote.client.adresse_ligne2 }}{% endif %}<br>
+                        {{ quote.client.code_postal }} {{ quote.client.ville }}<br>
+                        {{ quote.client.pays }}<br>
+                        {% if quote.client.numero_tva %}<small class="text-muted">N° TVA : {{ quote.client.numero_tva }}</small>{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="mt-4 h4">Articles Proposés</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="table-light">
+                <tr>
+                    <th>Description</th>
+                    <th class="text-end">Quantité</th>
+                    <th class="text-end">Prix U. HTVA (€)</th>
+                    <th class="text-end">Total Ligne HTVA (€)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in quote.items.all %}
+                <tr>
+                    <td>{{ item.description }}</td>
+                    <td class="text-end">{{ item.quantity|floatformat:2 }}</td>
+                    <td class="text-end">{{ item.unit_price_htva|floatformat:2 }}</td>
+                    <td class="text-end">{{ item.total_line_htva|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="row justify-content-end mt-3">
+        <div class="col-md-5">
+            <p class="lead"><strong>Total HTVA :</strong> <span class="float-end">{{ quote.total_amount_htva|floatformat:2 }} €</span></p>
+            <p class="lead"><strong>TVA ({{ quote.vat_percentage|floatformat:2 }} %) :</strong> <span class="float-end">{{ quote.vat_amount|floatformat:2 }} €</span></p>
+            <hr>
+            <h4 class="fw-bold"><strong>Total TTC :</strong> <span class="float-end">{{ quote.total_amount_ttc|floatformat:2 }} €</span></h4>
+        </div>
+    </div>
+    
+    {% if quote.notes %}
+    <div class="card mt-4">
+        <div class="card-header">Notes</div>
+        <div class="card-body">
+            <p class="card-text">{{ quote.notes|linebreaksbr }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="mt-4 text-center">
+        <a href="{% url 'documents:view_quote_pdf' quote.id %}" target="_blank" class="btn btn-success">Télécharger PDF du Devis</a>
+        
+        {% if quote.status == 'Accepté' %}
+            <a href="{% url 'documents:convert_quote_to_invoice' quote.id %}" class="btn btn-primary ms-2">Convertir en Facture</a>
+        {% elif quote.status != 'Converti' %}
+            <button type="button" class="btn btn-primary ms-2" disabled title="Le devis doit être au statut 'Accepté' pour être converti.">Convertir en Facture</button>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

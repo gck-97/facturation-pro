@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h1 class="h3 mb-0">{{ page_title }}</h1>
+                </div>
+                <div class="card-body">
+                    <p class="lead">
+                        Êtes-vous certain de vouloir supprimer définitivement le produit/service : <strong>"{{ product.nom }}"</strong> ?
+                    </p>
+                    <p class="text-muted">
+                        Cette action est irréversible.
+                    </p>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-danger">Oui, supprimer définitivement</button>
+                            <a href="{% url 'products:product_list' %}" class="btn btn-secondary">Annuler</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

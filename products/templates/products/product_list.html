@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ page_title }}</h1>
+        <div>
+            {# Ce bouton mènera au formulaire de création que nous ferons ensuite #}
+            <a href="{% url 'products:product_create' %}" class="btn btn-primary">Ajouter un produit/service</a>
+        </div>
+    </div>
+
+    {% if products_list %}
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nom</th>
+                                <th>Description</th>
+                                <th class="text-end">Prix Unitaire HTVA (€)</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products_list %}
+                                <tr>
+                                    <td>{{ product.nom }}</td>
+                                    <td>{{ product.description|truncatewords:15|default:"-" }}</td>
+                                    <td class="text-end">{{ product.prix_unitaire|floatformat:2 }}</td>
+                                    <td class="text-center">
+                                        {# Ces boutons seront fonctionnels plus tard #}
+                                        <a href="{% url 'products:product_update' product.id %}" class="btn btn-sm btn-outline-secondary">Modifier</a>
+                                        <a href="{% url 'products:product_delete' product.id %}" class="btn btn-sm btn-outline-danger">Supprimer</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            Vous n'avez pas encore de produit ou service. <a href="#" class="alert-link">Commencez par en ajouter un !</a>
+        </div>
+    {% endif %}
+{% endblock %}

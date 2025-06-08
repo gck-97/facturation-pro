@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">{{ page_title }}</h1>
+
+    {% if invoices_list %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Numéro Facture</th>
+                        <th>Client</th>
+                        <th>Date d'émission</th>
+                        <th>Date d'échéance</th>
+                        <th>Statut</th>
+                        <th class="text-end">Total TTC (€)</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices_list %}
+                        <tr>
+                            <td><a href="{% url 'documents:invoice_detail' invoice.id %}">{{ invoice.invoice_number }}</a></td>
+                            <td>{{ invoice.client.nom }}</td>
+                            <td>{{ invoice.issue_date|date:"d/m/Y" }}</td>
+                            <td>{{ invoice.due_date|date:"d/m/Y" }}</td>
+                            <td class="text-center">
+                                {% if invoice.status == 'Payée' %}
+                                    <span class="badge bg-success">{{ invoice.get_status_display }}</span>
+                                {% elif invoice.status == 'En retard' %}
+                                    <span class="badge bg-danger">{{ invoice.get_status_display }}</span>
+                                {% elif invoice.status == 'Envoyée' %}
+                                    <span class="badge bg-warning text-dark">{{ invoice.get_status_display }}</span>
+                                {% elif invoice.status == 'Annulée' %}
+                                    <span class="badge bg-secondary">{{ invoice.get_status_display }}</span>
+                                {% else %}
+                                    <span class="badge bg-info text-dark">{{ invoice.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">{{ invoice.total_amount_ttc|floatformat:2 }}</td>
+                            <td class="text-center">
+                                <a href="{% url 'documents:invoice_detail' invoice.id %}" class="btn btn-sm btn-outline-primary mb-1" title="Voir Détails">Détails</a>
+                                <a href="{% url 'documents:view_invoice_pdf' invoice.id %}" target="_blank" class="btn btn-sm btn-outline-success mb-1" title="Télécharger PDF">PDF</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info mt-4" role="alert">
+            Aucune facture à afficher pour le moment.
+        </div>
+    {% endif %}
+{% endblock %}

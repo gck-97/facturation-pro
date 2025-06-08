@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load humanize %} {% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Tableau de Bord</h1>
+    </div>
+
+    <p class="lead">Bienvenue sur votre tableau de bord, {{ user.username }} !</p>
+
+    <h2 class="h4 mt-4">Statistiques Clés</h2>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-danger">
+                <div class="card-header">Factures en Retard</div>
+                <div class="card-body">
+                    <h5 class="card-title display-4">{{ overdue_invoices_count }}</h5>
+                    <p class="card-text">Factures dont la date d'échéance est dépassée.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title display-4">{{ total_unpaid_amount|floatformat:2 }} €</h5>
+                    <p class="card-text">Montant total des factures impayées.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title display-4">{{ pending_quotes_count }}</h5>
+                    <p class="card-text">Devis en attente d'une réponse.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <h2 class="h4 mt-4">Accès Rapide</h2>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Factures</h5>
+                    <p class="card-text">Consultez la liste de vos factures.</p>
+                    <a href="{% url 'documents:invoice_list' %}" class="btn btn-primary">Voir les Factures</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Devis</h5>
+                    <p class="card-text">Consultez la liste de vos devis ou créez-en un nouveau.</p>
+                    <a href="{% url 'documents:quote_list' %}" class="btn btn-secondary">Voir la liste</a>
+                    <a href="{% url 'documents:quote_create' %}" class="btn btn-primary">Créer un Devis</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Administration</h5>
+                    <p class="card-text">Gérez vos clients et produits.</p>
+                    <a href="{% url 'admin:index' %}" class="btn btn-secondary">Aller à l'Admin</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

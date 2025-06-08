@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">{{ page_title }}</h1>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="card">
+            <div class="card-header">
+                Informations sur le devis
+            </div>
+            <div class="card-body">
+                {# Affichage manuel des champs pour placer le bouton '+' pour les clients #}
+                <div class="mb-3">
+                    <label for="{{ form.client.id_for_label }}" class="form-label">
+                        {{ form.client.label }}
+                        <button type="button" class="btn btn-sm btn-success py-0 px-1" data-bs-toggle="modal" data-bs-target="#addClientModal" title="Ajouter un nouveau client">+</button>
+                    </label>
+                    {{ form.client }}
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.issue_date.id_for_label }}" class="form-label">{{ form.issue_date.label }}</label>
+                        {{ form.issue_date }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.expiry_date.id_for_label }}" class="form-label">{{ form.expiry_date.label }}</label>
+                        {{ form.expiry_date }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="{{ form.vat_percentage.id_for_label }}" class="form-label">{{ form.vat_percentage.label }}</label>
+                    {{ form.vat_percentage }}
+                </div>
+                <div class="mb-3">
+                    <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+        </div>
+
+        <h2 class="mt-4 h4">Lignes d'articles</h2>
+        <div class="card">
+            <div class="card-body">
+                {{ formset.management_form }}
+                
+                <div class="row fw-bold mb-2 d-none d-md-flex">
+                    <div class="col-md-4">
+                        Produit
+                        <button type="button" class="btn btn-sm btn-success py-0 px-1" data-bs-toggle="modal" data-bs-target="#addProductModal" title="Ajouter un nouveau produit">+</button>
+                    </div>
+                    <div class="col-md-3">Description</div>
+                    <div class="col-md-2">Quantité</div>
+                    <div class="col-md-2">Prix Unitaire HTVA</div>
+                    <div class="col-md-1 text-end">Total Ligne</div>
+                </div>
+                <hr class="mt-0">
+
+                <div id="item-form-list">
+                    {% for item_form in formset %}
+                        <div class="row item-form mb-3 align-items-center">
+                            <div class="col-md-4">{{ item_form.product }}</div>
+                            <div class="col-md-3">{{ item_form.description }}</div>
+                            <div class="col-md-2">{{ item_form.quantity }}</div>
+                            <div class="col-md-2">{{ item_form.unit_price_htva }}</div>
+                            <div class="col-md-1 text-end fw-bold">
+                                <span class="line-total">0.00</span> €
+                            </div>
+                            {{ item_form.id }}
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <button type="button" id="add-item-form" class="btn btn-sm btn-outline-success">Ajouter une ligne</button>
+                <hr>
+                <div class="row justify-content-end">
+                    <div class="col-md-5">
+                        <p class="mb-1 d-flex justify-content-between"><span>Total HTVA :</span> <span id="total-htva">0.00</span> €</p>
+                        <p class="mb-1 d-flex justify-content-between"><span>TVA (<span id="vat-rate-display">21.00</span>%) :</span> <span id="total-tva">0.00</span> €</p>
+                        <p class="mb-0 fw-bold fs-5 d-flex justify-content-between"><span>Total TTC :</span> <span id="total-ttc">0.00</span> €</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Sauvegarder le devis</button>
+            <a href="{% url 'documents:quote_list' %}" class="btn btn-secondary">Annuler</a>
+        </div>
+    </form>
+
+    <template id="item-form-template">
+        <div class="row item-form mb-3 align-items-center">
+            <div class="col-md-4">{{ formset.empty_form.product }}</div>
+            <div class="col-md-3">{{ formset.empty_form.description }}</div>
+            <div class="col-md-2">{{ formset.empty_form.quantity }}</div>
+            <div class="col-md-2">{{ formset.empty_form.unit_price_htva }}</div>
+            <div class="col-md-1 text-end fw-bold"><span class="line-total">0.00</span> €</div>
+            <div class="col-md-1 d-flex align-items-center justify-content-center">
+                <button type="button" class="btn btn-sm btn-danger remove-item-form">Enlever</button>
+            </div>
+            {{ formset.empty_form.id }}
+        </div>
+    </template>
+
+    <div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Ajouter un Nouveau Produit</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div id="modal-product-form-content">
+                        <div class="mb-3"><label for="new-product-name" class="form-label">Nom du produit *</label><input type="text" id="new-product-name" class="form-control"></div>
+                        <div class="mb-3"><label for="new-product-description" class="form-label">Description</label><textarea id="new-product-description" class="form-control" rows="3"></textarea></div>
+                        <div class="mb-3"><label for="new-product-price" class="form-label">Prix Unitaire HTVA *</label><input type="number" id="new-product-price" class="form-control" step="0.01"></div>
+                        <div id="modal-product-error" class="alert alert-danger" style="display: none;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button><button type="button" id="save-new-product" class="btn btn-primary">Sauvegarder Produit</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addClientModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Ajouter un Nouveau Client</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div id="modal-client-form-content">
+                        <div class="mb-2"><label for="new-client-name" class="form-label">Nom du client *</label><input type="text" id="new-client-name" class="form-control"></div>
+                        <div class="mb-2"><label for="new-client-vat" class="form-label">N° de TVA</label><input type="text" id="new-client-vat" class="form-control"></div>
+                        <div class="mb-2"><label for="new-client-email" class="form-label">Email</label><input type="email" id="new-client-email" class="form-control"></div>
+                        <div class="mb-2"><label for="new-client-telephone" class="form-label">Téléphone</label><input type="text" id="new-client-telephone" class="form-control"></div>
+                        <div class="mb-2"><label for="new-client-address" class="form-label">Adresse</label><input type="text" id="new-client-address" class="form-control"></div>
+                        <div class="row">
+                            <div class="col-md-4 mb-2"><label for="new-client-postal-code" class="form-label">Code Postal</label><input type="text" id="new-client-postal-code" class="form-control"></div>
+                            <div class="col-md-8 mb-2"><label for="new-client-city" class="form-label">Ville</label><input type="text" id="new-client-city" class="form-control"></div>
+                        </div>
+                        <div id="modal-client-error" class="alert alert-danger" style="display: none;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button><button type="button" id="save-new-client" class="btn btn-primary">Sauvegarder Client</button></div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    // On charge les données des produits envoyées par la vue
+    const productsData = JSON.parse('{{ products_data_json|escapejs }}');
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const createProductUrl = "{% url 'products:product_create_ajax' %}";
+    const createClientUrl = "{% url 'clients:client_create_ajax' %}";
+
+    // ... (la fonction updateTotals reste inchangée) ...
+    function updateTotals() {
+        let totalHTVA = 0;
+        const formList = document.getElementById('item-form-list');
+        const vatRateInput = document.querySelector('input[name="vat_percentage"]');
+        const vatRate = parseFloat(vatRateInput.value) || 0;
+        formList.querySelectorAll('.item-form').forEach(function(form) {
+            const deleteInput = form.querySelector('input[name$="-DELETE"]');
+            if (deleteInput && deleteInput.checked) { return; }
+            const quantity = parseFloat(form.querySelector('.quantity').value) || 0;
+            const price = parseFloat(form.querySelector('.price').value) || 0;
+            const lineTotal = quantity * price;
+            const lineTotalSpan = form.querySelector('.line-total');
+            if (lineTotalSpan) { lineTotalSpan.textContent = lineTotal.toFixed(2); }
+            totalHTVA += lineTotal;
+        });
+        const totalTVA = (totalHTVA * vatRate) / 100;
+        const totalTTC = totalHTVA + totalTVA;
+        document.getElementById('total-htva').textContent = totalHTVA.toFixed(2);
+        document.getElementById('vat-rate-display').textContent = vatRate.toFixed(2);
+        document.getElementById('total-tva').textContent = totalTVA.toFixed(2);
+        document.getElementById('total-ttc').textContent = totalTTC.toFixed(2);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const formList = document.getElementById('item-form-list');
+        const addItemBtn = document.getElementById('add-item-form');
+        const template = document.getElementById('item-form-template');
+        const totalFormsInput = document.querySelector('input[name="items-TOTAL_FORMS"]');
+        const vatRateInput = document.querySelector('input[name="vat_percentage"]');
+        const clientSelect = document.querySelector('.client-select');
+        
+        let activeProductSelect = null; 
+
+        function initializeTomSelect(element) {
+            if (element.tomselect) { return; }
+            new TomSelect(element, { create: false });
+        }
+
+        function attachEventListeners(form) {
+            const productSelect = form.querySelector('.product-select');
+            if (productSelect) {
+                initializeTomSelect(productSelect);
+                if (productSelect.tomselect) {
+                    productSelect.tomselect.on('change', function(selectedId) {
+                        const priceInput = form.querySelector('.price');
+                        const descInput = form.querySelector('input[type="text"][name$="-description"]');
+                        if (selectedId && productsData[selectedId]) {
+                            const product = productsData[selectedId];
+                            priceInput.value = parseFloat(product.price).toFixed(2);
+                            descInput.value = product.description;
+                        } else {
+                            priceInput.value = ''; descInput.value = '';
+                        }
+                        updateTotals();
+                    });
+                }
+            }
+            form.querySelectorAll('.quantity, .price').forEach(input => {
+                input.addEventListener('input', updateTotals);
+            });
+        }
+
+        if(clientSelect) {
+            initializeTomSelect(clientSelect);
+        }
+
+        formList.querySelectorAll('.item-form').forEach(attachEventListeners);
+        if(vatRateInput) { vatRateInput.addEventListener('input', updateTotals); }
+        updateTotals();
+
+        addItemBtn.addEventListener('click', function() {
+            const newFormRow = template.content.firstElementChild.cloneNode(true);
+            let formNum = parseInt(totalFormsInput.value);
+            newFormRow.innerHTML = newFormRow.innerHTML.replace(/__prefix__/g, formNum);
+            formList.appendChild(newFormRow);
+            totalFormsInput.value = formNum + 1;
+            attachEventListeners(newFormRow);
+        });
+
+        formList.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('remove-item-form')) {
+                const select = e.target.closest('.item-form').querySelector('.product-select');
+                if (select && select.tomselect) { select.tomselect.destroy(); }
+                e.target.closest('.item-form').remove();
+                updateTotals();
+            }
+        });
+
+        // --- GESTION DES MODALES ---
+        const addProductModal = new bootstrap.Modal(document.getElementById('addProductModal'));
+        const saveNewProductBtn = document.getElementById('save-new-product');
+        const addClientModal = new bootstrap.Modal(document.getElementById('addClientModal'));
+        const saveNewClientBtn = document.getElementById('save-new-client');
+        
+        document.body.addEventListener('click', function(e) {
+            if (e.target && e.target.dataset.bsTarget === '#addProductModal') {
+                activeProductSelect = e.target.closest('.item-form')?.querySelector('.product-select');
+            }
+        });
+
+        saveNewProductBtn.addEventListener('click', function() {
+            const name = document.getElementById('new-product-name').value;
+            const description = document.getElementById('new-product-description').value;
+            const price = document.getElementById('new-product-price').value;
+            const errorDiv = document.getElementById('modal-product-error');
+
+            fetch(createProductUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: JSON.stringify({ name: name, description: description, price: price }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    errorDiv.textContent = data.error;
+                    errorDiv.style.display = 'block';
+                } else {
+                    // --- DÉBUT DE LA LOGIQUE CORRIGÉE ---
+                    productsData[data.id] = {description: description, price: price};
+                    
+                    // On met à jour toutes les listes déroulantes existantes
+                    document.querySelectorAll('.product-select').forEach(select => {
+                        if(select.tomselect) {
+                            select.tomselect.addOption({value: data.id, text: data.name});
+                        }
+                    });
+
+                    // On cherche la dernière ligne vide pour y insérer le nouveau produit
+                    let lastEmptySelect = null;
+                    const allSelects = document.querySelectorAll('.product-select');
+                    for (let i = allSelects.length - 1; i >= 0; i--) {
+                        if (allSelects[i].tomselect && !allSelects[i].tomselect.getValue()) {
+                            lastEmptySelect = allSelects[i].tomselect;
+                            break;
+                        }
+                    }
+
+                    // Si on a trouvé une ligne vide, on la remplit. Sinon, on en crée une nouvelle.
+                    if (lastEmptySelect) {
+                        lastEmptySelect.setValue(data.id);
+                    } else {
+                        // S'il n'y a pas de ligne vide, on clique sur "Ajouter une ligne" pour l'utilisateur
+                        document.getElementById('add-item-form').click();
+                        // Et on met à jour la toute nouvelle ligne (avec un petit délai pour être sûr qu'elle est bien là)
+                        setTimeout(() => {
+                            const newRowSelect = document.querySelector('#item-form-list .item-form:last-child .product-select');
+                            if (newRowSelect && newRowSelect.tomselect) {
+                                newRowSelect.tomselect.setValue(data.id);
+                            }
+                        }, 100);
+                    }
+                    
+                    // --- FIN DE LA LOGIQUE CORRIGÉE ---
+
+                    addProductModal.hide();
+                    document.getElementById('modal-product-form-content').querySelector('form')?.reset();
+                    errorDiv.style.display = 'none';
+                }
+            });
+        });
+
+        saveNewClientBtn.addEventListener('click', function() {
+            const name = document.getElementById('new-client-name').value;
+            const vat_number = document.getElementById('new-client-vat').value;
+            const email = document.getElementById('new-client-email').value;
+            const telephone = document.getElementById('new-client-telephone').value;
+            const address = document.getElementById('new-client-address').value;
+            const postal_code = document.getElementById('new-client-postal-code').value;
+            const city = document.getElementById('new-client-city').value;
+            const errorDiv = document.getElementById('modal-client-error');
+
+            fetch(createClientUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: JSON.stringify({ 
+                    name: name, vat_number: vat_number, email: email, telephone: telephone, 
+                    address: address, postal_code: postal_code, city: city 
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    errorDiv.textContent = data.error;
+                    errorDiv.style.display = 'block';
+                } else {
+                    // ----- DÉBUT DE LA CORRECTION CLÉ -----
+                    const mainClientSelect = document.querySelector("#{{ form.client.id_for_label }}");
+                    
+                    // On vérifie si Tom Select est activé sur ce champ
+                    if (mainClientSelect && mainClientSelect.tomselect) {
+                        // On utilise l'API de Tom Select pour ajouter l'option ET la sélectionner
+                        mainClientSelect.tomselect.addOption({value: data.id, text: data.name});
+                        mainClientSelect.tomselect.setValue(data.id);
+                    } else {
+                        // Code de secours si Tom Select n'est pas là
+                        const newOption = new Option(data.name, data.id, true, true);
+                        mainClientSelect.appendChild(newOption);
+                    }
+                    // ----- FIN DE LA CORRECTION CLÉ -----
+
+                    // Reset et fermeture de la modale
+                    addClientModal.hide();
+                    document.getElementById('modal-client-form-content').reset();
+                    errorDiv.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

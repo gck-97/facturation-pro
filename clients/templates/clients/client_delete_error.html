@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Impossible de supprimer le client{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h1 class="h3 mb-0">Suppression Impossible</h1>
+                </div>
+                <div class="card-body">
+                    <p class="lead">
+                        Le client <strong>"{{ client.nom }}"</strong> ne peut pas être supprimé car il est encore référencé par les documents suivants :
+                    </p>
+
+                    <ul class="list-group">
+                        {% for obj in protected_objects %}
+                            <li class="list-group-item">
+                                {# On affiche une description de l'objet qui bloque #}
+                                {{ obj }} 
+                                {# On pourrait même ajouter un lien pour voir le document en question #}
+                                {# Exemple : <a href="{% url 'documents:invoice_detail' obj.id %}">Voir</a> #}
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                    <p class="mt-4">
+                        Veuillez supprimer ou modifier ces documents avant de pouvoir supprimer ce client.
+                    </p>
+
+                    <div class="mt-4">
+                        <a href="{% url 'clients:client_list' %}" class="btn btn-primary">&laquo; Retour à la liste des clients</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">{{ page_title }}</h1>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {# Comme pour le formulaire client, form.as_p affichera chaque champ. #}
+                {# Le style Bootstrap est appliqué grâce aux widgets définis dans notre ProductForm. #}
+                {{ form.as_p }}
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">Sauvegarder</button>
+                    <a href="{% url 'products:product_list' %}" class="btn btn-secondary">Annuler</a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
