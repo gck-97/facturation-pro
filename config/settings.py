@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-*cjljq5k3hbne0(b98jsf!$%145$(mw0dc^1ki)pwynd6_)w4a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['59ea-81-240-208-169.ngrok-free.app', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['facturation-pro.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -147,6 +147,6 @@ LOGIN_REDIRECT_URL = '/' # Redirige vers la racine du site, qui est maintenant n
 LOGOUT_REDIRECT_URL = '/login/' # Où aller après une déconnexion
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://59ea-81-240-208-169.ngrok-free.app',
+    'facturation-pro.onrender.com', 'localhost', '127.0.0.1',
 ]
 
