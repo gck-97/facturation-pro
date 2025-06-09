@@ -87,6 +87,10 @@ DATABASES = {
     }
 }
 
+# Si la variable d'environnement DATABASE_URL existe (sur Render), on l'utilise.
+if 'DATABASE_URL' in os.environ:
+    DATABASES['default'] = dj_database_url.config(conn_max_age=600)
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
