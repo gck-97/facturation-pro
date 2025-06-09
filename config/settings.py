@@ -28,10 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['facturation-pro.onrender.com', 'localhost', '127.0.0.1']
 
-CSRF_TRUSTED_ORIGINS = [
-    'facturation-pro.onrender.com', 'localhost', '127.0.0.1',
-]
-
+CSRF_TRUSTED_ORIGINS = ['https://facturation-pro.onrender.com']
 
 # Application definition
 
