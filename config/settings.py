@@ -28,6 +28,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['facturation-pro.onrender.com', 'localhost', '127.0.0.1']
 
+CSRF_TRUSTED_ORIGINS = [
+    'facturation-pro.onrender.com', 'localhost', '127.0.0.1',
+]
+
 
 # Application definition
 
@@ -152,9 +156,7 @@ LOGIN_URL = 'login' # 'login' sera le nom de notre future URL de connexion
 LOGIN_REDIRECT_URL = '/' # Redirige vers la racine du site, qui est maintenant notre tableau de bord
 LOGOUT_REDIRECT_URL = '/login/' # Où aller après une déconnexion
 
-CSRF_TRUSTED_ORIGINS = [
-    'facturation-pro.onrender.com', 'localhost', '127.0.0.1',
-]
+
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
