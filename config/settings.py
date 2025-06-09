@@ -151,6 +151,8 @@ CSRF_TRUSTED_ORIGINS = [
     'facturation-pro.onrender.com', 'localhost', '127.0.0.1',
 ]
 
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
