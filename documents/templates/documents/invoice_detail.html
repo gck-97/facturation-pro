@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="invoice-container">
+    <p><a href="{% url 'documents:invoice_list' %}" class="btn btn-outline-secondary btn-sm mb-4">&laquo; Retour à la liste des factures</a></p>
+
+    <div class="invoice-header">
+        {# ... (Partie inchangée : titre, dates, statut) ... #}
+        <h1 class="display-5">Facture N° {{ invoice.invoice_number }}</h1>
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <p><strong>Date d'émission :</strong> {{ invoice.issue_date|date:"d/m/Y" }}</p>
+                <p><strong>Date d'échéance :</strong> {{ invoice.due_date|date:"d/m/Y" }}</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p><strong>Statut :</strong> 
+                    {% if invoice.status == 'Payée' %}
+                        <span class="badge bg-success fs-6">{{ invoice.get_status_display }}</span>
+                    {% elif invoice.status == 'En retard' %}
+                        <span class="badge bg-danger fs-6">{{ invoice.get_status_display }}</span>
+                    {% elif invoice.status == 'Envoyée' %}
+                        <span class="badge bg-warning text-dark fs-6">{{ invoice.get_status_display }}</span>
+                    {% elif invoice.status == 'Annulée' %}
+                        <span class="badge bg-secondary fs-6">{{ invoice.get_status_display }}</span>
+                    {% else %}
+                        <span class="badge bg-info text-dark fs-6">{{ invoice.get_status_display }}</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        {# ... (Partie inchangée : infos client) ... #}
+        <div class="col-md-6">
+            <h2 class="h4">Client</h2>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ invoice.client.nom }}</h5>
+                    <p class="card-text">
+                        {{ invoice.client.adresse_ligne1 }}{% if invoice.client.adresse_ligne2 %}, {{ invoice.client.adresse_ligne2 }}{% endif %}<br>
+                        {{ invoice.client.code_postal }} {{ invoice.client.ville }}<br>
+                        {{ invoice.client.pays }}<br>
+                        {% if invoice.client.numero_tva %}<small class="text-muted">N° TVA : {{ invoice.client.numero_tva }}</small>{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="mt-4 h4">Articles Facturés</h2>
+    {# ... (Partie inchangée : tableau des articles) ... #}
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="table-light">
+                <tr>
+                    <th>Description</th>
+                    <th class="text-end">Quantité</th>
+                    <th class="text-end">Prix U. HTVA (€)</th>
+                    <th class="text-end">Total Ligne HTVA (€)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in invoice.items.all %}
+                <tr>
+                    <td>{{ item.description }}</td>
+                    <td class="text-end">{{ item.quantity|floatformat:2 }}</td>
+                    <td class="text-end">{{ item.unit_price_htva|floatformat:2 }}</td>
+                    <td class="text-end">{{ item.total_line_htva|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="row totals-section">
+        {# ... (Partie inchangée : totaux HTVA et TVA) ... #}
+        <div class="col-md-6 offset-md-6">
+            <p><strong>Total HTVA :</strong> <span class="float-end">{{ invoice.total_amount_htva|floatformat:2 }} €</span></p>
+            <p><strong>TVA ({{ invoice.vat_percentage|floatformat:2 }} %) :</strong> <span class="float-end">{{ invoice.vat_amount|floatformat:2 }} €</span></p>
+            <hr>
+            <h4 class="fw-bold"><strong>Total TTC :</strong> <span class="float-end">{{ invoice.total_amount_ttc|floatformat:2 }} €</span></h4>
+            
+            {# MODIFICATION : Ajout du total payé et du solde restant #}
+            <p class="text-success"><strong>Montant Payé :</strong> <span class="float-end">- {{ invoice.get_total_paid|floatformat:2 }} €</span></p>
+            <h4 class="fw-bold"><strong>Solde Restant Dû :</strong> <span class="float-end">{{ invoice.balance_due|floatformat:2 }} €</span></h4>
+        </div>
+    </div>
+    
+    {# NOUVELLE SECTION : Historique des paiements #}
+    {% if invoice.payments.all %}
+    <h2 class="mt-4 h4">Historique des Paiements</h2>
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Date du Paiement</th>
+                    <th>Méthode</th>
+                    <th>Référence</th>
+                    <th class="text-end">Montant Payé</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in invoice.payments.all %}
+                <tr>
+                    <td>{{ payment.payment_date|date:"d/m/Y" }}</td>
+                    <td>{{ payment.get_payment_method_display }}</td>
+                    <td>{{ payment.reference|default:"-" }}</td>
+                    <td class="text-end">{{ payment.amount_paid|floatformat:2 }} €</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if invoice.notes %}
+    {# ... (Partie inchangée : notes) ... #}
+    <div class="card mt-4">
+        <div class="card-header">Notes</div>
+        <div class="card-body">
+            <p class="card-text">{{ invoice.notes|linebreaksbr }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+{# Extrait de documents/templates/documents/invoice_detail.html #}
+
+            <div class="mt-4 text-center">
+                <a href="{% url 'documents:view_invoice_pdf' invoice.id %}" target="_blank" class="btn btn-success btn-lg">Télécharger PDF</a>
+                
+                {# NOUVEAU BOUTON - Conditionnel au statut #}
+                {% if invoice.status != 'Annulée' %}
+                    <a href="{% url 'documents:create_credit_note_from_invoice' invoice.id %}" class="btn btn-warning btn-lg ms-2">Créer Note de Crédit</a>
+                {% endif %}
+            </div>
+        </div> {# Fin de .invoice-container #}
+    {% endblock %}

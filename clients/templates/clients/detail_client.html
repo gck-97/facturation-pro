@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Détail du Client : {{ client.nom }}</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #1c1c1c; color: #f0f0f0; padding: 20px; }
+        .container { max-width: 700px; margin: auto; background-color: #282828; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        h1 { color: #4db6ac; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 20px; }
+        p { color: #ccc; line-height: 1.6; }
+        strong { color: #ddd; }
+        .detail-item { margin-bottom: 12px; }
+        .back-link { display: inline-block; margin-top: 25px; padding: 10px 15px; background-color: #4db6ac; color: #1c1c1c; text-decoration: none; border-radius: 4px; font-weight: bold;}
+        .back-link:hover { background-color: #5cd1c5; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Détail du Client : {{ client.nom }}</h1>
+
+        <div class="detail-item">
+            <strong>Nom :</strong> {{ client.nom }}
+        </div>
+
+        <div class="detail-item">
+            <strong>Email :</strong> {{ client.email|default:"Non renseigné" }}
+        </div>
+
+        <div class="detail-item">
+            <strong>Téléphone :</strong> {{ client.telephone|default:"Non renseigné" }}
+        </div>
+
+        <div class="detail-item">
+            <strong>Adresse :</strong>
+            <p style="white-space: pre-wrap;">{{ client.adresse|default:"Non renseignée" }}</p>
+        </div>
+
+        <div class="detail-item">
+            <strong>Numéro de TVA :</strong> {{ client.numero_tva|default:"Non renseigné" }}
+        </div>
+
+        <div class="detail-item">
+            <strong>Date de création :</strong> {{ client.date_creation|date:"d/m/Y H:i" }}
+        </div>
+
+        <a href="{% url 'client-list' %}" class="back-link">Retour à la liste des clients</a>
+    </div>
+</body>
+</html>

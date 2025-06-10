@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <p><a href="{% url 'documents:credit_note_list' %}" class="btn btn-outline-secondary btn-sm mb-4">&laquo; Retour à la liste</a></p>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h2 mb-0">Note de Crédit N° {{ credit_note.credit_note_number }}</h1>
+                <span class="badge bg-secondary fs-6">{{ credit_note.get_status_display }}</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h2 class="h5">Client</h2>
+                    <p>
+                        <strong>{{ credit_note.client.nom }}</strong><br>
+                        {{ credit_note.client.adresse_ligne1 }}<br>
+                        {{ credit_note.client.code_postal }} {{ credit_note.client.ville }}
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p><strong>Date d'émission :</strong> {{ credit_note.issue_date|date:"d/m/Y" }}</p>
+                    {% if credit_note.original_invoice %}
+                        <p><strong>Concerne la facture :</strong> <a href="{% url 'documents:invoice_detail' credit_note.original_invoice.id %}">{{ credit_note.original_invoice.invoice_number }}</a></p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <h3 class="h5 mt-4">Détails de l'avoir</h3>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Description</th>
+                            <th class="text-end">Quantité</th>
+                            <th class="text-end">Prix U. HTVA (€)</th>
+                            <th class="text-end">Total Ligne HTVA (€)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in credit_note.items.all %}
+                        <tr>
+                            <td>{{ item.description }}</td>
+                            <td class="text-end">{{ item.quantity|floatformat:2 }}</td>
+                            <td class="text-end">{{ item.unit_price_htva|floatformat:2 }}</td>
+                            <td class="text-end">{{ item.total_line_htva|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="row justify-content-end mt-3">
+                <div class="col-md-5">
+                    <p><strong>Total Avoir HTVA :</strong> <span class="float-end">{{ credit_note.total_amount_htva|floatformat:2 }} €</span></p>
+                    <p><strong>TVA ({{ credit_note.vat_percentage|floatformat:2 }} %) :</strong> <span class="float-end">{{ credit_note.vat_amount|floatformat:2 }} €</span></p>
+                    <hr>
+                    <h4 class="fw-bold"><strong>Total Avoir TTC :</strong> <span class="float-end">{{ credit_note.total_amount_ttc|floatformat:2 }} €</span></h4>
+                </div>
+            </div>
+
+            {% if credit_note.notes %}
+            <div class="mt-4">
+                <h3 class="h5">Notes :</h3>
+                <p>{{ credit_note.notes|linebreaksbr }}</p>
+            </div>
+            {% endif %}
+        </div>
+        <div class="card-footer text-center">
+            <a href="{% url 'documents:view_credit_note_pdf' credit_note.id %}" target="_blank" class="btn btn-success">Télécharger PDF</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">{{ page_title }}</h1>
+
+    {% if credit_notes_list %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Numéro Note de Crédit</th>
+                        <th>Client</th>
+                        <th>Facture d'origine</th>
+                        <th>Date d'émission</th>
+                        <th>Statut</th>
+                        <th class="text-end">Total TTC (€)</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cn in credit_notes_list %}
+                        <tr>
+                            {# Lien vers la page de détail (à créer plus tard) #}
+                            <td><a href="{% url 'documents:credit_note_detail' cn.id %}">{{ cn.credit_note_number }}</a></td> 
+                            <td>{{ cn.client.nom }}</td>
+                            <td>
+                                {% if cn.original_invoice %}
+                                    <a href="{% url 'documents:invoice_detail' cn.original_invoice.id %}">
+                                        {{ cn.original_invoice.invoice_number }}
+                                    </a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ cn.issue_date|date:"d/m/Y" }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary">{{ cn.get_status_display }}</span>
+                            </td>
+                            <td class="text-end">{{ cn.total_amount_ttc|floatformat:2 }}</td>
+                            <td class="text-center">
+                                {# Lien vers le PDF de la note de crédit #}
+                                <a href="{% url 'documents:view_credit_note_pdf' cn.id %}" target="_blank" class="btn btn-sm btn-outline-success mb-1" title="Télécharger PDF">PDF</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info mt-4" role="alert">
+            Aucune note de crédit à afficher pour le moment.
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">{{ page_title }}</h1>
+
+    {% if quotes_list %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Numéro Devis</th>
+                        <th>Client</th>
+                        <th>Date d'émission</th>
+                        <th>Date d'expiration</th>
+                        <th>Statut</th>
+                        <th class="text-end">Total TTC (€)</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for quote in quotes_list %}
+                        <tr>
+                            <td><a href="{% url 'documents:quote_detail' quote.id %}">{{ quote.quote_number }}</a></td>
+                            <td>{{ quote.client.nom }}</td>
+                            <td>{{ quote.issue_date|date:"d/m/Y" }}</td>
+                            <td>{{ quote.expiry_date|date:"d/m/Y" }}</td>
+                            <td class="text-center">
+                                {% if quote.status == 'Accepté' %}
+                                    <span class="badge bg-success">{{ quote.get_status_display }}</span>
+                                {% elif quote.status == 'Refusé' or quote.status == 'Expiré' %}
+                                    <span class="badge bg-danger">{{ quote.get_status_display }}</span>
+                                {% elif quote.status == 'Envoyé' %}
+                                    <span class="badge bg-warning text-dark">{{ quote.get_status_display }}</span>
+                                {% elif quote.status == 'Converti' %}
+                                    <span class="badge bg-primary">{{ quote.get_status_display }}</span>
+                                {% else %}
+                                    <span class="badge bg-info text-dark">{{ quote.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">{{ quote.total_amount_ttc|floatformat:2 }}</td>
+                            <td class="text-center">
+                                <a href="{% url 'documents:quote_detail' quote.id %}" class="btn btn-sm btn-outline-primary mb-1" title="Voir Détails">Détails</a>
+                                <a href="{% url 'documents:view_quote_pdf' quote.id %}" target="_blank" class="btn btn-sm btn-outline-success mb-1" title="Télécharger PDF">PDF</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info mt-4" role="alert">
+            Aucun devis à afficher pour le moment.
+        </div>
+    {% endif %}
+{% endblock %}
