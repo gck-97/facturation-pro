@@ -12,8 +12,6 @@ from datetime import date
 from django.contrib.auth import logout
 from django.shortcuts import redirect
 
-from django.http import HttpResponse
-from django.contrib.auth.models import User
 
 @login_required
 def dashboard(request):
@@ -91,21 +89,3 @@ def custom_logout_view(request):
     logout(request)
     # Vous serez redirigé vers LOGOUT_REDIRECT_URL que nous avons défini dans settings.py
     return redirect('login')
-
-def create_superuser_view(request):
-    """
-    Vue à usage unique pour créer un super-utilisateur en production.
-    À SUPPRIMER APRÈS UTILISATION.
-    """
-    # Vérifier si un admin existe déjà pour ne pas le recréer
-    if User.objects.filter(is_superuser=True).exists():
-        return HttpResponse("Un administrateur existe déjà.")
-
-    # Définissez ici vos identifiants souhaités
-    username = "admin"
-    email = "giuseppecirino@outlook.be"
-    password = "32D7746EDD"
-
-    User.objects.create_superuser(username=username, email=email, password=password)
-    
-    return HttpResponse(f"Super-utilisateur '{username}' créé avec succès. Veuillez supprimer cette URL de votre projet.")
