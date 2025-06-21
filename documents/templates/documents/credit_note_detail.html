@@ -4,13 +4,33 @@
 
 {% block content %}
 <div class="container">
-    <p><a href="{% url 'documents:credit_note_list' %}" class="btn btn-outline-secondary btn-sm mb-4">&laquo; Retour à la liste</a></p>
+    <p>
+        <a href="{% url 'documents:credit_note_list' %}" class="btn btn-outline-secondary btn-sm mb-4">
+            &laquo; Retour à la liste
+        </a>
+    </p>
 
     <div class="card">
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
                 <h1 class="h2 mb-0">Note de Crédit N° {{ credit_note.credit_note_number }}</h1>
-                <span class="badge bg-secondary fs-6">{{ credit_note.get_status_display }}</span>
+                <div class="d-flex align-items-center" style="gap: 10px;">
+                    <strong>Statut :</strong>
+                    {% if credit_note.status == 'Finalisée' %}
+                        <span class="badge bg-success fs-6">{{ credit_note.get_status_display }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary fs-6">{{ credit_note.get_status_display }}</span>
+                    {% endif %}
+                    {% if credit_note.status != 'Finalisée' %}
+                        <form action="{% url 'documents:update_credit_note_status' credit_note.id %}" method="post" class="d-inline ms-2">
+                            {% csrf_token %}
+                            <select name="status" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+                                <option value="Brouillon" {% if credit_note.status == 'Brouillon' %}selected{% endif %}>Brouillon</option>
+                                <option value="Finalisée" {% if credit_note.status == 'Finalisée' %}selected{% endif %}>Finalisée</option>
+                            </select>
+                        </form>
+                    {% endif %}
+                </div>
             </div>
         </div>
         <div class="card-body">
@@ -26,7 +46,11 @@
                 <div class="col-md-6 text-md-end">
                     <p><strong>Date d'émission :</strong> {{ credit_note.issue_date|date:"d/m/Y" }}</p>
                     {% if credit_note.original_invoice %}
-                        <p><strong>Concerne la facture :</strong> <a href="{% url 'documents:invoice_detail' credit_note.original_invoice.id %}">{{ credit_note.original_invoice.invoice_number }}</a></p>
+                        <p><strong>Concerne la facture :</strong>
+                            <a href="{% url 'documents:invoice_detail' credit_note.original_invoice.id %}">
+                                {{ credit_note.original_invoice.invoice_number }}
+                            </a>
+                        </p>
                     {% endif %}
                 </div>
             </div>
@@ -71,6 +95,7 @@
             </div>
             {% endif %}
         </div>
+
         <div class="card-footer text-center">
             <a href="{% url 'documents:view_credit_note_pdf' credit_note.id %}" target="_blank" class="btn btn-success">Télécharger PDF</a>
         </div>

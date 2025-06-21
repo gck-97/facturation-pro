@@ -27,5 +27,10 @@ urlpatterns = [
 
     # NOUVELLE URL pour générer une note de crédit à partir d'une facture
     path('invoice/<int:invoice_id>/create-credit-note/', views.create_credit_note_from_invoice, name='create_credit_note_from_invoice'),
+
+    # Pour changer le statut
+    path('invoice/<int:invoice_id>/update_status/', views.update_invoice_status, name='update_invoice_status'),
+    path('quote/<int:quote_id>/update_status/', views.update_quote_status, name='update_quote_status'),
+    path('credit-note/<int:credit_note_id>/update_status/', views.update_credit_note_status, name='update_credit_note_status'),
     
 ]

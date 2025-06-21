@@ -13,7 +13,6 @@ from .models import Invoice, InvoiceItem, Quote, QuoteItem, Payment, CreditNote,
 from .forms import QuoteForm, QuoteItemFormset, InvoiceForm, InvoiceItemFormset
 from .utils import generate_invoice_pdf, generate_quote_pdf, generate_credit_note_pdf
 
-
 # --- Vues pour les Factures (Invoices) ---
 
 @login_required
@@ -25,7 +24,6 @@ def invoice_list(request):
     }
     return render(request, 'documents/invoice_list.html', context)
 
-
 @login_required
 def invoice_detail(request, invoice_id):
     invoice = get_object_or_404(Invoice, id=invoice_id, user=request.user)
@@ -35,16 +33,14 @@ def invoice_detail(request, invoice_id):
     }
     return render(request, 'documents/invoice_detail.html', context)
 
-
 @login_required
 def view_invoice_pdf(request, invoice_id):
     invoice = get_object_or_404(Invoice, id=invoice_id, user=request.user)
-    company_profile = request.user.company_profile  # Récupère le profil de l'entreprise utilisateur
-    pdf_content = generate_invoice_pdf(invoice, company_profile)  # Passe company_profile comme argument
+    company_profile = request.user.company_profile
+    pdf_content = generate_invoice_pdf(invoice, company_profile)
     response = HttpResponse(pdf_content, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="facture_{invoice.invoice_number}.pdf"'
     return response
-
 
 # --- Vues pour les Devis (Quotes) ---
 
@@ -57,7 +53,6 @@ def quote_list(request):
     }
     return render(request, 'documents/quote_list.html', context)
 
-
 @login_required
 def quote_detail(request, quote_id):
     quote = get_object_or_404(Quote, id=quote_id, user=request.user)
@@ -67,16 +62,14 @@ def quote_detail(request, quote_id):
     }
     return render(request, 'documents/quote_detail.html', context)
 
-
 @login_required
 def view_quote_pdf(request, quote_id):
     quote = get_object_or_404(Quote, id=quote_id, user=request.user)
-    company_profile = request.user.company_profile  # Récupère le profil de l'entreprise utilisateur
-    pdf_content = generate_quote_pdf(quote, company_profile)  # Passe company_profile comme argument
+    company_profile = request.user.company_profile
+    pdf_content = generate_quote_pdf(quote, company_profile)
     response = HttpResponse(pdf_content, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="devis_{quote.quote_number}.pdf"'
     return response
-
 
 @login_required
 def quote_create(request):
@@ -107,11 +100,9 @@ def quote_create(request):
         'formset': formset,
         'page_title': page_title,
         'products_data_json': json.dumps(products_data),
-        'document_type': 'quote'  # On dit au template que c'est un devis
+        'document_type': 'quote'
     }
-    # MODIFIÉ : On pointe vers le nouveau template générique
     return render(request, 'documents/document_form.html', context)
-
 
 # --- Vues pour les Notes de Crédit (Credit Notes) ---
 
@@ -124,7 +115,6 @@ def credit_note_list(request):
     }
     return render(request, 'documents/credit_note_list.html', context)
 
-
 @login_required
 def credit_note_detail(request, credit_note_id):
     credit_note = get_object_or_404(CreditNote, id=credit_note_id, user=request.user)
@@ -134,16 +124,14 @@ def credit_note_detail(request, credit_note_id):
     }
     return render(request, 'documents/credit_note_detail.html', context)
 
-
 @login_required
 def view_credit_note_pdf(request, credit_note_id):
     credit_note = get_object_or_404(CreditNote, id=credit_note_id, user=request.user)
-    company_profile = request.user.company_profile  # Récupère le profil de l'entreprise utilisateur
-    pdf_content = generate_credit_note_pdf(credit_note, company_profile)  # Passe company_profile comme argument
+    company_profile = request.user.company_profile
+    pdf_content = generate_credit_note_pdf(credit_note, company_profile)
     response = HttpResponse(pdf_content, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="note_de_credit_{credit_note.credit_note_number}.pdf"'
     return response
-
 
 # --- Vues pour les Actions (Conversions) ---
 
@@ -158,7 +146,7 @@ def convert_quote_to_invoice(request, quote_id):
             user=request.user,
             client=quote.client,
             issue_date=timezone.now().date(),
-            due_date=timezone.now().date() + timedelta(days=30), 
+            due_date=timezone.now().date() + timedelta(days=30),
             status=Invoice.InvoiceStatus.DRAFT,
             vat_percentage=quote.vat_percentage,
             notes=f"Facture générée à partir du devis N°{quote.quote_number}.\n{quote.notes or ''}"
@@ -177,7 +165,6 @@ def convert_quote_to_invoice(request, quote_id):
     except Exception as e:
         messages.error(request, f"Une erreur est survenue lors de la conversion du devis : {e}")
         return redirect('documents:quote_detail', quote_id=quote.id)
-
 
 @login_required
 def create_credit_note_from_invoice(request, invoice_id):
@@ -206,7 +193,6 @@ def create_credit_note_from_invoice(request, invoice_id):
         messages.error(request, f"Une erreur est survenue lors de la création de la note de crédit : {e}")
         return redirect('documents:invoice_detail', invoice_id=original_invoice.id)
 
-
 @login_required
 def invoice_create(request):
     page_title = 'Créer une nouvelle facture'
@@ -215,7 +201,7 @@ def invoice_create(request):
 
     if request.method == 'POST':
         form = InvoiceForm(request.POST, user=request.user)
-        formset = InvoiceItemFormset(request.POST, prefix='items')  # Utilisation des formulaires de facture
+        formset = InvoiceItemFormset(request.POST, prefix='items')
         if form.is_valid() and formset.is_valid():
             with transaction.atomic():
                 invoice = form.save(commit=False)
@@ -236,6 +222,48 @@ def invoice_create(request):
         'formset': formset,
         'page_title': page_title,
         'products_data_json': json.dumps(products_data),
-        'document_type': 'invoice'  # On dit au template que c'est une facture
+        'document_type': 'invoice'
     }
     return render(request, 'documents/document_form.html', context)
+
+# --- Vues pour mettre à jour le statut des documents ---
+
+@login_required
+def update_invoice_status(request, invoice_id):
+    invoice = get_object_or_404(Invoice, id=invoice_id, user=request.user)
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        # Correction ici !
+        if new_status in Invoice.InvoiceStatus.values:
+            invoice.status = new_status
+            invoice.save()
+            messages.success(request, f"Le statut de la facture N°{invoice.invoice_number} a été mis à jour.")
+        else:
+            messages.error(request, "Statut invalide.")
+        return redirect('documents:invoice_detail', invoice_id=invoice.id)
+
+@login_required
+def update_quote_status(request, quote_id):
+    quote = get_object_or_404(Quote, id=quote_id, user=request.user)
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status in Quote.QuoteStatus.values:
+            quote.status = new_status
+            quote.save()
+            messages.success(request, f"Le statut du devis N°{quote.quote_number} a été mis à jour.")
+        else:
+            messages.error(request, "Statut invalide.")
+        return redirect('documents:quote_detail', quote_id=quote.id)
+
+@login_required
+def update_credit_note_status(request, credit_note_id):
+    credit_note = get_object_or_404(CreditNote, id=credit_note_id, user=request.user)
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status in CreditNote.CreditNoteStatus.values:
+            credit_note.status = new_status
+            credit_note.save()
+            messages.success(request, f"Le statut de la note de crédit N°{credit_note.credit_note_number} a été mis à jour.")
+        else:
+            messages.error(request, "Statut invalide.")
+        return redirect('documents:credit_note_detail', credit_note_id=credit_note.id)

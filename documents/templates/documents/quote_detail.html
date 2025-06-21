@@ -4,7 +4,11 @@
 
 {% block content %}
 <div class="quote-container">
-    <p><a href="{% url 'documents:quote_list' %}" class="btn btn-outline-secondary btn-sm mb-4">&laquo; Retour à la liste des devis</a></p>
+    <p>
+        <a href="{% url 'documents:quote_list' %}" class="btn btn-outline-secondary btn-sm mb-4">
+            &laquo; Retour à la liste des devis
+        </a>
+    </p>
 
     <div class="quote-header">
         <h1 class="display-5">Devis N° {{ quote.quote_number }}</h1>
@@ -14,19 +18,32 @@
                 <p><strong>Date d'expiration :</strong> {{ quote.expiry_date|date:"d/m/Y" }}</p>
             </div>
             <div class="col-md-6 text-md-end">
-                <p><strong>Statut :</strong> 
+                <div class="d-flex align-items-center justify-content-md-end" style="gap: 10px;">
+                    <strong>Statut :</strong>
                     {% if quote.status == 'Accepté' %}
                         <span class="badge bg-success fs-6">{{ quote.get_status_display }}</span>
                     {% elif quote.status == 'Refusé' or quote.status == 'Expiré' %}
                         <span class="badge bg-danger fs-6">{{ quote.get_status_display }}</span>
                     {% elif quote.status == 'Envoyé' %}
-                        <span class="badge bg-warning text-dark fs-6">{{ quote.get_status_display }}</span>
-                    {% elif quote.status == 'Converti' %}
                         <span class="badge bg-primary fs-6">{{ quote.get_status_display }}</span>
+                    {% elif quote.status == 'Converti' %}
+                        <span class="badge bg-secondary fs-6">{{ quote.get_status_display }}</span>
                     {% else %}
-                        <span class="badge bg-info text-dark fs-6">{{ quote.get_status_display }}</span>
+                        <span class="badge bg-light text-dark border fs-6">{{ quote.get_status_display }}</span>
                     {% endif %}
-                </p>
+                    {% if quote.status != 'Converti' %}
+                        <form action="{% url 'documents:update_quote_status' quote.id %}" method="post" class="d-inline ms-2">
+                            {% csrf_token %}
+                            <select name="status" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+                                <option value="Brouillon" {% if quote.status == 'Brouillon' %}selected{% endif %}>Brouillon</option>
+                                <option value="Envoyé" {% if quote.status == 'Envoyé' %}selected{% endif %}>Envoyé</option>
+                                <option value="Accepté" {% if quote.status == 'Accepté' %}selected{% endif %}>Accepté</option>
+                                <option value="Refusé" {% if quote.status == 'Refusé' %}selected{% endif %}>Refusé</option>
+                                <option value="Expiré" {% if quote.status == 'Expiré' %}selected{% endif %}>Expiré</option>
+                            </select>
+                        </form>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
