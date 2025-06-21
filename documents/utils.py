@@ -1,52 +1,55 @@
-# documents/utils.py
-
 from io import BytesIO
-from django.http import HttpResponse
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_RIGHT, TA_CENTER, TA_LEFT
-from django.utils import timezone
-
-from company_settings.models import CompanyProfile
 
 class BasePDFGenerator:
-    def __init__(self, buffer, pagesize):
+    def __init__(self, buffer, pagesize, company_profile=None):
         self.buffer = buffer
         self.pagesize = pagesize
         self.width, self.height = pagesize
 
-        self.company_profile = CompanyProfile.objects.first()
-        self.accent_color = colors.HexColor(self.company_profile.accent_color if self.company_profile and self.company_profile.accent_color else '#2c3e50')
-        
+        # Utilisation du setter pour le profil et la couleur accentuée
+        self.company_profile = company_profile
+
         # --- Définition des Styles ---
         self.styles = getSampleStyleSheet()
         self.styles.add(ParagraphStyle(name='Normal_RIGHT', parent=self.styles['Normal'], alignment=TA_RIGHT))
         self.styles.add(ParagraphStyle(name='Normal_LEFT', parent=self.styles['Normal'], alignment=TA_LEFT))
-        # Style du Titre du document (ex: FACTURE) en couleur
         self.styles.add(ParagraphStyle(name='DocTitle', parent=self.styles['h1'], fontSize=20, leading=24, textColor=self.accent_color))
-        # Style du Numéro du document, en noir
         self.styles.add(ParagraphStyle(name='DocNumber', parent=self.styles['h1'], fontSize=20, leading=24, textColor=colors.black))
-        # Style pour le titre "CLIENT N°..."
         self.styles.add(ParagraphStyle(name='SectionTitle', parent=self.styles['h2'], fontSize=12, leading=14, textColor=self.accent_color))
-        # Style pour les infos de l'entreprise (texte en couleur, aligné à gauche DANS son bloc)
         self.styles.add(ParagraphStyle(name='CompanyInfo', parent=self.styles['Normal'], alignment=TA_LEFT, textColor=self.accent_color))
-        # Styles pour les en-têtes du tableau des articles
         self.styles.add(ParagraphStyle(name='TableHeader', parent=self.styles['Normal'], fontName='Helvetica-Bold', textColor=self.accent_color, alignment=TA_LEFT))
         self.styles.add(ParagraphStyle(name='TableHeader_RIGHT', parent=self.styles['Normal'], fontName='Helvetica-Bold', textColor=self.accent_color, alignment=TA_RIGHT))
 
-# Dans documents/utils.py, à l'intérieur de la classe BasePDFGenerator
+    @property
+    def company_profile(self):
+        return getattr(self, '_company_profile', None)
+
+    @company_profile.setter
+    def company_profile(self, value):
+        self._company_profile = value
+        # Mise à jour automatique de la couleur accentuée
+        if value and getattr(value, 'accent_color', None):
+            accent = value.accent_color
+            if not accent.startswith('#'):
+                accent = f"#{accent}"
+            self.accent_color = colors.HexColor(accent)
+        else:
+            self.accent_color = colors.HexColor('#2c3e50')
 
     def _build_header_and_addresses(self, doc_type, doc_number, issue_date, other_date_label, other_date, client):
-        """ Construit l'en-tête et les adresses avec la logique d'alignement finale et correcte. """
+        """ Construit l'en-tête et les adresses avec la logique d'alignement correcte. """
         
-        # --- Colonne de gauche (Titre, Dates, Infos Client) ---
+        # Colonne de gauche : titre, dates, infos client
         title_text = Paragraph(doc_type.upper(), self.styles['DocTitle'])
         number_text = Paragraph(f"N° {doc_number}", self.styles['DocNumber'])
         dates_text = f"Date d'émission : {issue_date.strftime('%d/%m/%Y')}<br/>{other_date_label} : {other_date.strftime('%d/%m/%Y')}"
-        
+
         client_title = Paragraph(f"CLIENT N°{client.id} :", self.styles['SectionTitle'])
         client_info_text = f"""
             {client.nom}<br/>
@@ -55,9 +58,14 @@ class BasePDFGenerator:
             Tél : {client.telephone or ''}<br/>
             Email : {client.email or ''}
         """
-        left_col_content = [title_text, number_text, Spacer(1, 0.3*cm), Paragraph(dates_text, self.styles['Normal_LEFT']), Spacer(1, 1.5*cm), client_title, Spacer(1, 0.2*cm), Paragraph(client_info_text, self.styles['Normal_LEFT'])]
+        left_col_content = [
+            title_text, number_text, Spacer(1, 0.3*cm), 
+            Paragraph(dates_text, self.styles['Normal_LEFT']), Spacer(1, 1.5*cm), 
+            client_title, Spacer(1, 0.2*cm), 
+            Paragraph(client_info_text, self.styles['Normal_LEFT'])
+        ]
 
-        # --- Colonne de droite (Logo et Infos Entreprise) ---
+        # Colonne de droite : logo et infos entreprise
         right_col_content = []
         if self.company_profile:
             company_block_data = []
@@ -83,9 +91,8 @@ class BasePDFGenerator:
             company_block_table = Table(company_block_data, style=[('VALIGN', (0,0), (-1,-1), 'TOP')])
             right_col_content.append(company_block_table)
 
-        # On crée la table principale à 2 colonnes
+        # Table principale 2 colonnes
         main_header_data = [[left_col_content, right_col_content]]
-        # MODIFICATION ICI pour changer la largeur des colonnes
         main_header_table = Table(main_header_data, colWidths=[self.width*0.6 - 2*cm, self.width*0.4 - 2*cm])
         main_header_table.setStyle(TableStyle([
             ('VALIGN', (0,0), (-1,-1), 'TOP'),
@@ -164,26 +171,27 @@ class BasePDFGenerator:
         doc.build(story)
 
 
-# --- Fonctions simplifiées qui appellent le générateur ---
-def generate_invoice_pdf(invoice):
+# Fonctions simplifiées d'appel
+
+def generate_invoice_pdf(invoice, company_profile):
     buffer = BytesIO()
-    generator = BasePDFGenerator(buffer, A4)
+    generator = BasePDFGenerator(buffer, A4, company_profile=company_profile)
     generator.build_pdf(invoice, "FACTURE")
     pdf = buffer.getvalue()
     buffer.close()
     return pdf
 
-def generate_quote_pdf(quote):
+def generate_quote_pdf(quote, company_profile):
     buffer = BytesIO()
-    generator = BasePDFGenerator(buffer, A4)
+    generator = BasePDFGenerator(buffer, A4, company_profile=company_profile)
     generator.build_pdf(quote, "DEVIS")
     pdf = buffer.getvalue()
     buffer.close()
     return pdf
 
-def generate_credit_note_pdf(credit_note):
+def generate_credit_note_pdf(credit_note, company_profile):
     buffer = BytesIO()
-    generator = BasePDFGenerator(buffer, A4)
+    generator = BasePDFGenerator(buffer, A4, company_profile=company_profile)
     generator.build_pdf(credit_note, "NOTE DE CRÉDIT")
     pdf = buffer.getvalue()
     buffer.close()

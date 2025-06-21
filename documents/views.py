@@ -1,5 +1,3 @@
-# documents/views.py
-
 import json
 from datetime import timedelta
 
@@ -41,7 +39,8 @@ def invoice_detail(request, invoice_id):
 @login_required
 def view_invoice_pdf(request, invoice_id):
     invoice = get_object_or_404(Invoice, id=invoice_id, user=request.user)
-    pdf_content = generate_invoice_pdf(invoice)
+    company_profile = request.user.company_profile  # Récupère le profil de l'entreprise utilisateur
+    pdf_content = generate_invoice_pdf(invoice, company_profile)  # Passe company_profile comme argument
     response = HttpResponse(pdf_content, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="facture_{invoice.invoice_number}.pdf"'
     return response
@@ -72,13 +71,12 @@ def quote_detail(request, quote_id):
 @login_required
 def view_quote_pdf(request, quote_id):
     quote = get_object_or_404(Quote, id=quote_id, user=request.user)
-    pdf_content = generate_quote_pdf(quote)
+    company_profile = request.user.company_profile  # Récupère le profil de l'entreprise utilisateur
+    pdf_content = generate_quote_pdf(quote, company_profile)  # Passe company_profile comme argument
     response = HttpResponse(pdf_content, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="devis_{quote.quote_number}.pdf"'
     return response
 
-
-# documents/views.py
 
 @login_required
 def quote_create(request):
@@ -109,7 +107,7 @@ def quote_create(request):
         'formset': formset,
         'page_title': page_title,
         'products_data_json': json.dumps(products_data),
-        'document_type': 'quote' # On dit au template que c'est un devis
+        'document_type': 'quote'  # On dit au template que c'est un devis
     }
     # MODIFIÉ : On pointe vers le nouveau template générique
     return render(request, 'documents/document_form.html', context)
@@ -140,7 +138,8 @@ def credit_note_detail(request, credit_note_id):
 @login_required
 def view_credit_note_pdf(request, credit_note_id):
     credit_note = get_object_or_404(CreditNote, id=credit_note_id, user=request.user)
-    pdf_content = generate_credit_note_pdf(credit_note)
+    company_profile = request.user.company_profile  # Récupère le profil de l'entreprise utilisateur
+    pdf_content = generate_credit_note_pdf(credit_note, company_profile)  # Passe company_profile comme argument
     response = HttpResponse(pdf_content, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="note_de_credit_{credit_note.credit_note_number}.pdf"'
     return response
@@ -207,6 +206,7 @@ def create_credit_note_from_invoice(request, invoice_id):
         messages.error(request, f"Une erreur est survenue lors de la création de la note de crédit : {e}")
         return redirect('documents:invoice_detail', invoice_id=original_invoice.id)
 
+
 @login_required
 def invoice_create(request):
     page_title = 'Créer une nouvelle facture'
@@ -215,12 +215,12 @@ def invoice_create(request):
 
     if request.method == 'POST':
         form = InvoiceForm(request.POST, user=request.user)
-        formset = InvoiceItemFormset(request.POST, prefix='items') # Utilisation des formulaires de facture
+        formset = InvoiceItemFormset(request.POST, prefix='items')  # Utilisation des formulaires de facture
         if form.is_valid() and formset.is_valid():
             with transaction.atomic():
                 invoice = form.save(commit=False)
                 invoice.user = request.user
-                invoice.save() 
+                invoice.save()
                 formset.instance = invoice
                 formset.save()
             messages.success(request, f"La facture N°{invoice.invoice_number} a été créée avec succès !")
@@ -236,6 +236,6 @@ def invoice_create(request):
         'formset': formset,
         'page_title': page_title,
         'products_data_json': json.dumps(products_data),
-        'document_type': 'invoice' # On dit au template que c'est une facture
+        'document_type': 'invoice'  # On dit au template que c'est une facture
     }
     return render(request, 'documents/document_form.html', context)

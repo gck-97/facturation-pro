@@ -14,6 +14,19 @@
             padding-top: 56px; /* Hauteur de la barre de navigation fixe */
             background-color: #f8f9fa; 
         }
+        
+        /* Améliorer l'apparence du bouton Profil Entreprise */
+        .navbar-nav .nav-item .nav-link {
+            font-weight: 500; /* Pour un texte un peu plus épais */
+            text-transform: uppercase; /* Mettre le texte en majuscules pour plus de propreté */
+            transition: background-color 0.3s ease; /* Ajouter une transition pour l'effet de survol */
+        }
+
+        .navbar-nav .nav-item .nav-link:hover {
+            background-color: #007bff; /* Couleur d'arrière-plan lors du survol */
+            border-radius: 5px; /* Coins arrondis pour plus de douceur */
+            color: white; /* Change la couleur du texte lors du survol */
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -43,6 +56,10 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'documents:credit_note_list' %}">Notes de Crédit</a> 
+                    </li>
+                    <!-- Ajout du bouton Profil Entreprise -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'settings:company_profile' %}">Profil Entreprise</a> <!-- Nouveau bouton -->
                     </li>
                 </ul>
                 <ul class="navbar-nav">

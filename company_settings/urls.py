@@ -3,10 +3,8 @@
 from django.urls import path
 from . import views
 
-app_name = 'company_settings'
-
 urlpatterns = [
-    # This will be the URL for your profile settings page later
-    # It will correspond to the full URL: /settings/profile/
-    # path('profile/', views.profile_settings_view, name='profile_settings'), 
+    # ... tes autres routes ...
+    path('live-pdf-preview/', views.live_pdf_preview, name='live_pdf_preview'),
+    path('profil/', views.manage_profile, name='manage_profile'),
 ]

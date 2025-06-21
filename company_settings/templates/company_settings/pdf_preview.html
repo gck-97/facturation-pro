@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        :root {
+            --accent: {{ accent_color|default:"#E05B82" }};
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #222;
+            background: #fff;
+        }
+        .header {
+            background: var(--accent);
+            color: #fff;
+            padding: 24px 40px;
+            font-size: 2.2rem;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+        .container {
+            padding: 40px;
+        }
+        .company, .client {
+            margin-bottom: 24px;
+        }
+        .section-title {
+            color: var(--accent);
+            font-weight: bold;
+            margin-top: 32px;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 18px;
+        }
+        .table th {
+            background: var(--accent);
+            color: #fff;
+            padding: 10px 6px;
+            font-weight: bold;
+            border: 1px solid var(--accent);
+            font-size: 1rem;
+        }
+        .table td {
+            padding: 8px 6px;
+            border: 1px solid #ddd;
+            text-align: center;
+            font-size: 0.98rem;
+        }
+        .total-row td {
+            font-weight: bold;
+            background: var(--accent);
+            color: #fff;
+        }
+        .totals {
+            margin-top: 20px;
+            width: 330px;
+            float: right;
+        }
+        .totals-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .totals-table th, .totals-table td {
+            padding: 8px;
+        }
+        .totals-table th {
+            text-align: left;
+        }
+        .totals-table .main-total {
+            background: var(--accent);
+            color: #fff;
+            font-size: 1.12rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">DEVIS</div>
+    <div class="container">
+        <table style="width:100%; margin-bottom:32px;">
+            <tr>
+                <td class="company">
+                    <div class="section-title">Émetteur</div>
+                    <strong>{{ company_name }}</strong><br>
+                    {{ address_line1 }}<br>
+                    {% if address_line2 %}{{ address_line2 }}<br>{% endif %}
+                    {{ postal_code }} {{ city }}<br>
+                    {{ country }}<br>
+                    N° TVA : {{ vat_number }}<br>
+                    Tél : {{ phone_number }}<br>
+                    Email : {{ email_address }}<br>
+                    {% if logo %}
+                        <img src="{{ logo.url }}" style="max-height: 80px; margin-top:10px;">
+                    {% endif %}
+                </td>
+                <td class="client">
+                    <div class="section-title">Client</div>
+                    <strong>Nom du client</strong><br>
+                    Adresse du client<br>
+                    Tél : 000000000<br>
+                    Email : client@email.com<br>
+                </td>
+            </tr>
+        </table>
+
+        <div class="section-title">Détails du devis</div>
+        <table class="table">
+            <tr>
+                <th>Description</th>
+                <th>Quantité</th>
+                <th>PU (€)</th>
+                <th>Total (€)</th>
+            </tr>
+            <tr>
+                <td>Exemple produit/service</td>
+                <td>5.00</td>
+                <td>5.00</td>
+                <td>25.00</td>
+            </tr>
+            <!-- Ajoute d'autres lignes si nécessaire -->
+        </table>
+
+        <div class="totals">
+            <table class="totals-table">
+                <tr>
+                    <th>Total HTVA :</th>
+                    <td>25.00 €</td>
+                </tr>
+                <tr>
+                    <th>TVA (21%) :</th>
+                    <td>5.25 €</td>
+                </tr>
+                <tr>
+                    <th class="main-total">TOTAL TTC :</th>
+                    <td class="main-total">30.25 €</td>
+                </tr>
+            </table>
+        </div>
+        <div style="clear:both;"></div>
+
+        <div class="section-title" style="margin-top: 70px;">Conditions</div>
+        <div style="font-size:0.97rem; margin-bottom:40px;">
+            {{ terms_and_conditions|linebreaks }}
+        </div>
+    </div>
+</body>
+</html>

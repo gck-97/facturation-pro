@@ -33,6 +33,7 @@ CSRF_TRUSTED_ORIGINS = ['https://facturation-pro.onrender.com']
 # Application definition
 
 INSTALLED_APPS = [
+    'settings',
     'colorfield', 
     'django.contrib.humanize',
     'core.apps.CoreConfig',
@@ -129,6 +130,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # config/settings.py
 # ... (tout le reste de votre fichier settings.py) ...

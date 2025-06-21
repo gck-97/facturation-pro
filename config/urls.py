@@ -26,15 +26,17 @@ from core import views as core_views # <-- Assurez-vous que cet import est prés
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')), 
-    path('documents/', include('documents.urls')),
+    path('entreprise/', include('company_settings.urls')),
     path('settings/', include('company_settings.urls')),
     path('clients/', include('clients.urls')),
     path('products/', include('products.urls')),
+    path('documents/', include('documents.urls')),
     # URL de connexion
     path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
     
     # URL DE DÉCONNEXION - Assurez-vous qu'elle pointe vers votre vue
     path('logout/', core_views.custom_logout_view, name='logout'),
+    path('settings/', include('settings.urls')),
 ]
 
 if settings.DEBUG:

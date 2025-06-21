@@ -1,0 +1,18 @@
+<!-- settings/templates/settings/company_profile.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Entreprise</title>
+</head>
+<body>
+    <h1>Profil de l'Entreprise</h1>
+
+    <p><strong>Nom de l'entreprise:</strong> {{ company.company_name }}</p>
+    <p><strong>Adresse:</strong> {{ company.address_line1 }}</p>
+    <p><strong>Code postal:</strong> {{ company.postal_code }} {{ company.city }}</p>
+    <p><strong>Email:</strong> {{ company.email_address }}</p>
+    <p><strong>Téléphone:</strong> {{ company.phone_number }}</p>
+</body>
+</html>
