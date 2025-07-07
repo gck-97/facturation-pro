@@ -120,18 +120,12 @@ def send_quote_email_view(request, quote_id):
 
     user_display_name = request.user.get_full_name() or request.user.username
     site_name = "Facturation Pro"
-    from_email = 'giuseppecirino@outlook.be'
-
+    from_email = f'{user_display_name} via {site_name} <giuseppecirino@outlook.be>'
 
     subject = f"Votre devis {quote.quote_number}"
 
     accept_url = request.build_absolute_uri(reverse('documents:quote_accept', args=[str(quote.public_token)]))
     reject_url = request.build_absolute_uri(reverse('documents:quote_reject', args=[str(quote.public_token)]))
-    public_url = request.build_absolute_uri(reverse('documents:quote_public_view', args=[str(quote.public_token)]))
-
-    user_display_name = request.user.get_full_name() or request.user.username
-    site_name = "Facturation Pro"
-    from_email = f'{user_display_name} via {site_name} <giuseppecirino@outlook.be>'
 
     text_content = (
         f"Bonjour,\n\n"
@@ -162,8 +156,15 @@ def send_quote_email_view(request, quote_id):
     )
     email.attach_alternative(html_content, "text/html")
     email.send(fail_silently=False)
+
+    # METS LE STATUT À SENT !
+    if quote.status != Quote.QuoteStatus.SENT:
+        quote.status = Quote.QuoteStatus.SENT
+        quote.save(update_fields=["status", "updated_at"])
+
     messages.success(request, "Le devis a été envoyé par email au client !")
     return redirect('documents:quote_detail', quote_id=quote.id)
+
 
 
 @login_required
@@ -499,34 +500,30 @@ def quote_public_pdf(request, public_token):
 
 def quote_accept_view(request, public_token):
     quote = get_object_or_404(Quote, public_token=public_token)
-    if quote.status == Quote.QuoteStatus.ACCEPTED:
-        confirmation = "Ce devis a déjà été accepté."
-    elif quote.status == Quote.QuoteStatus.REJECTED:
-        confirmation = "Ce devis a déjà été refusé."
+    if quote.status in ["Accepté", "ACCEPTED"]:
+        status = "already_accepted"
+    elif quote.status in ["Refusé", "REJECTED"]:
+        status = "already_rejected"
     else:
-        quote.status = Quote.QuoteStatus.ACCEPTED
+        quote.status = "Accepté"
         quote.save(update_fields=["status", "updated_at"])
-        confirmation = "Merci, vous avez accepté ce devis !"
-
+        status = "accepted"
     return render(request, "documents/quote_response.html", {
         "quote": quote,
-        "confirmation": confirmation,
-        "status": "accepted"
+        "status": status,
     })
 
 def quote_reject_view(request, public_token):
     quote = get_object_or_404(Quote, public_token=public_token)
-    if quote.status == Quote.QuoteStatus.REJECTED:
-        confirmation = "Ce devis a déjà été refusé."
-    elif quote.status == Quote.QuoteStatus.ACCEPTED:
-        confirmation = "Ce devis a déjà été accepté."
+    if quote.status in ["Refusé", "REJECTED"]:
+        status = "already_rejected"
+    elif quote.status in ["Accepté", "ACCEPTED"]:
+        status = "already_accepted"
     else:
-        quote.status = Quote.QuoteStatus.REJECTED
+        quote.status = "Refusé"
         quote.save(update_fields=["status", "updated_at"])
-        confirmation = "Vous avez refusé ce devis."
-
+        status = "rejected"
     return render(request, "documents/quote_response.html", {
         "quote": quote,
-        "confirmation": confirmation,
-        "status": "rejected"
+        "status": status,
     })

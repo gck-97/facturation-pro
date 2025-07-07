@@ -30,28 +30,37 @@
     </table>
 
     <div style="margin-top: 28px; text-align: right;">
-        <a href="{% url 'documents:quote_public_pdf' quote.public_token %}" class="btn btn-success" style="background:#158c3c; color:#fff; padding:10px 20px; border-radius:6px; text-decoration:none; font-size:1.1em;">
+        <a href="{% url 'documents:quote_public_pdf' quote.public_token %}" class="btn btn-success"
+           style="background:#158c3c; color:#fff; padding:10px 20px; border-radius:6px; text-decoration:none; font-size:1.1em;">
             Télécharger le devis PDF
         </a>
     </div>
 
-    <!-- Boutons accepter/refuser le devis -->
-    <div style="margin-top: 20px; text-align: center;">
-        {% if quote.status == "SENT" %}
-            <a href="{% url 'documents:quote_accept' quote.public_token %}"
-               class="btn btn-success"
-               style="padding:10px 28px; background:#28a745; color:white; border-radius:8px; text-decoration:none; font-size:1.1em; margin-right:15px;">
-                ✅ J'accepte le devis
-            </a>
-            <a href="{% url 'documents:quote_reject' quote.public_token %}"
-               class="btn btn-warning"
-               style="padding:10px 28px; background:#ffc107; color:#333; border-radius:8px; text-decoration:none; font-size:1.1em;">
-                ❌ Je refuse
-            </a>
-        {% elif quote.status == "ACCEPTED" %}
-            <div style="margin-top: 20px; color: #28a745; font-size: 1.1em;">✅ Ce devis a déjà été accepté.</div>
-        {% elif quote.status == "REJECTED" %}
-            <div style="margin-top: 20px; color: #c0392b; font-size: 1.1em;">❌ Ce devis a été refusé.</div>
+    <!-- Statut et boutons accepter/refuser le devis -->
+    <div style="margin-top: 30px; text-align: center;">
+        {% if quote.status == "SENT" or quote.status == "Envoyé" %}
+            <div style="margin-top: 18px;">
+                <a href="{% url 'documents:quote_accept' quote.public_token %}"
+                   style="padding:10px 28px; background:#28a745; color:white; border-radius:8px; text-decoration:none; font-size:1.1em; margin-right:15px; display:inline-block;">
+                    ✅ J'accepte le devis
+                </a>
+                <a href="{% url 'documents:quote_reject' quote.public_token %}"
+                   style="padding:10px 28px; background:#c0392b; color:white; border-radius:8px; text-decoration:none; font-size:1.1em; display:inline-block;">
+                    ❌ Je refuse
+                </a>
+            </div>
+        {% elif quote.status == "ACCEPTED" or quote.status == "Accepté" %}
+            <div style="margin-top: 20px; color: #28a745; font-size: 1.1em; font-weight:bold;">
+                ✅ Ce devis a déjà été accepté.
+            </div>
+        {% elif quote.status == "REJECTED" or quote.status == "Refusé" %}
+            <div style="margin-top: 20px; color: #c0392b; font-size: 1.1em; font-weight:bold;">
+                ❌ Ce devis a été refusé.
+            </div>
+        {% else %}
+            <div style="margin-top: 20px; color: #b58b00; font-size: 1.1em; font-weight:bold;">
+                🟡 Ce devis n'a pas encore été envoyé au client.
+            </div>
         {% endif %}
     </div>
 </div>

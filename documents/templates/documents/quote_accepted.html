@@ -2,11 +2,18 @@
 {% block content %}
   <div class="text-center py-8">
     <h1>Merci !</h1>
-    <p>Vous avez accepté le devis N°{{ quote.quote_number }}.</p>
-    {% if accepted %}
-      <p>Votre acceptation a bien été prise en compte.</p>
+    <p>Devis N°{{ quote.quote_number }}</p>
+    {% if status == "accepted" %}
+      <p class="text-success fs-5">✅ Votre acceptation a bien été prise en compte.</p>
+    {% elif status == "already_accepted" %}
+      <p class="text-info fs-5">Ce devis a déjà été accepté.</p>
+    {% elif status == "rejected" %}
+      <p class="text-danger fs-5">❌ Vous avez refusé ce devis.</p>
+    {% elif status == "already_rejected" %}
+      <p class="text-warning fs-5">Ce devis a déjà été refusé.</p>
     {% else %}
-      <p>Ce devis a déjà été accepté.</p>
+      <p class="text-muted">Action effectuée.</p>
     {% endif %}
+    <a href="{% url 'documents:quote_public_view' quote.public_token %}" class="btn btn-outline-primary mt-4">Retour au devis</a>
   </div>
 {% endblock %}
