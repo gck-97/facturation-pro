@@ -1,0 +1,10 @@
+<div class="row totals-section">
+    <div class="col-md-6 offset-md-6">
+        <p><strong>Total HTVA :</strong> <span class="float-end">{{ invoice.total_amount_htva|floatformat:2 }} €</span></p>
+        <p><strong>TVA ({{ invoice.vat_percentage|floatformat:2 }} %) :</strong> <span class="float-end">{{ invoice.vat_amount|floatformat:2 }} €</span></p>
+        <hr>
+        <h4 class="fw-bold"><strong>Total TTC :</strong> <span class="float-end">{{ invoice.total_amount_ttc|floatformat:2 }} €</span></h4>
+        <p class="text-success"><strong>Montant Payé :</strong> <span class="float-end">- {{ invoice.get_total_paid|floatformat:2 }} €</span></p>
+        <h4 class="fw-bold"><strong>Solde Restant Dû :</strong> <span class="float-end">{{ invoice.balance_due|floatformat:2 }} €</span></h4>
+    </div>
+</div>

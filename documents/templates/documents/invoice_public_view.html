@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="invoice-public" style="max-width: 800px; margin: 30px auto; padding: 32px; background: #fff; border-radius: 18px; box-shadow: 0 3px 24px rgba(0,0,0,0.09);">
+    <h1 style="color: #20253A; margin-bottom: 20px;">Facture {{ invoice.invoice_number }}</h1>
+    <p><b>Client :</b> {{ invoice.client.nom }}</p>
+    <p><b>Date :</b> {{ invoice.issue_date|date:"d/m/Y" }}</p>
+    <p><b>Montant total :</b> {{ invoice.total_amount_ttc }} €</p>
+    <hr style="margin: 24px 0;">
+    <h3>Détails</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th style="text-align:left; border-bottom:1px solid #bbb;">Description</th>
+                <th style="text-align:right; border-bottom:1px solid #bbb;">Quantité</th>
+                <th style="text-align:right; border-bottom:1px solid #bbb;">Prix unitaire</th>
+                <th style="text-align:right; border-bottom:1px solid #bbb;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice.items.all %}
+            <tr>
+                <td>{{ item.description }}</td>
+                <td style="text-align:right;">{{ item.quantity }}</td>
+                <td style="text-align:right;">{{ item.unit_price_htva }} €</td>
+                <td style="text-align:right;">{{ item.total_line_htva }} €</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 28px; text-align: right;">
+        <a href="{% url 'documents:invoice_public_pdf' invoice.public_token %}" class="btn btn-primary" style="background:#2244aa; color:#fff; padding:10px 20px; border-radius:6px; text-decoration:none; font-size:1.1em;">
+            Télécharger la facture PDF
+        </a>
+        <!-- Tu pourras ajouter ici le bouton "Payer" plus tard -->
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% if invoice.payments.all %}
+<h2 class="mt-4 h4">Historique des Paiements</h2>
+<div class="table-responsive">
+    <table class="table table-sm table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Date du Paiement</th>
+                <th>Méthode</th>
+                <th>Référence</th>
+                <th class="text-end">Montant Payé</th>
+                <th style="width:80px;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in invoice.payments.all %}
+            <tr>
+                <td>{{ payment.payment_date|date:"d/m/Y" }}</td>
+                <td>{{ payment.get_payment_method_display }}</td>
+                <td>{{ payment.reference|default:"-" }}</td>
+                <td class="text-end">{{ payment.amount_paid|floatformat:2 }} €</td>
+                <td class="text-center">
+                    <form method="post"
+                          action="{% url 'documents:ajax_delete_payment' payment.id %}"
+                          class="delete-payment-ajax-form"
+                          data-payment-id="{{ payment.id }}"
+                          style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-trash"></i>
+                            Supprimer
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-warning mt-4">Aucun paiement enregistré.</div>
+{% endif %}

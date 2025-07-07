@@ -168,3 +168,12 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'pepecirino@gmail.com'          # Mets bien ton adresse Gmail ici
+EMAIL_HOST_PASSWORD = 'adyqffbrcwxwvdew'          # Mets ton mot de passe d’application SANS espace
+DEFAULT_FROM_EMAIL = 'pepecirino@gmail.com'
+

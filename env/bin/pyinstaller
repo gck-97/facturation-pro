@@ -1,4 +1,6 @@
-#!/home/ci/Bureau/facturation_pro/env/bin/python
+#!/bin/sh
+'''exec' "/home/ci/Bureau/facturation_pro /env/bin/python3" "$0" "$@"
+' '''
 # -*- coding: utf-8 -*-
 import re
 import sys

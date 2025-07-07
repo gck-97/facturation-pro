@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Facture {{ invoice.invoice_number }}</title>
+</head>
+<body>
+    <h1>Facture {{ invoice.invoice_number }}</h1>
+    <p>Client : {{ invoice.client.nom }}</p>
+    <p>Date : {{ invoice.issue_date }}</p>
+    <p>Total : {{ invoice.total_amount_ttc }} €</p>
+    <!-- Ajoute plus d’infos selon tes besoins -->
+</body>
+</html>

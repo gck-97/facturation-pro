@@ -1,7 +1,5 @@
 {% extends 'base.html' %}
-
 {% block title %}{{ page_title }}{% endblock %}
-
 {% block content %}
 <div class="invoice-container">
     <p>
@@ -21,19 +19,19 @@
             <div class="col-md-6 text-md-end">
                 <div class="d-flex align-items-center justify-content-md-end" style="gap: 10px;">
                     <strong>Statut :</strong>
-                    <!-- Badge dynamique -->
-                    {% if invoice.status == 'Payée' %}
-                        <span class="badge bg-success fs-6">{{ invoice.get_status_display }}</span>
-                    {% elif invoice.status == 'En retard' %}
-                        <span class="badge bg-danger fs-6">{{ invoice.get_status_display }}</span>
-                    {% elif invoice.status == 'Envoyée' %}
-                        <span class="badge bg-primary fs-6">{{ invoice.get_status_display }}</span>
-                    {% elif invoice.status == 'Annulée' %}
-                        <span class="badge bg-secondary fs-6">{{ invoice.get_status_display }}</span>
-                    {% else %}
-                        <span class="badge bg-light text-dark border fs-6">{{ invoice.get_status_display }}</span>
-                    {% endif %}
-                    <!-- Menu déroulant pour changer le statut -->
+                    <span id="invoice-status-badge">
+                        {% if invoice.status == 'Payée' %}
+                            <span class="badge bg-success fs-6">{{ invoice.get_status_display }}</span>
+                        {% elif invoice.status == 'En retard' %}
+                            <span class="badge bg-danger fs-6">{{ invoice.get_status_display }}</span>
+                        {% elif invoice.status == 'Envoyée' %}
+                            <span class="badge bg-primary fs-6">{{ invoice.get_status_display }}</span>
+                        {% elif invoice.status == 'Annulée' %}
+                            <span class="badge bg-secondary fs-6">{{ invoice.get_status_display }}</span>
+                        {% else %}
+                            <span class="badge bg-light text-dark border fs-6">{{ invoice.get_status_display }}</span>
+                        {% endif %}
+                    </span>
                     <form action="{% url 'documents:update_invoice_status' invoice.id %}" method="post" class="d-inline ms-2">
                         {% csrf_token %}
                         <select name="status" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
@@ -48,12 +46,6 @@
             </div>
         </div>
     </div>
-
-    {# ...le reste de ton template reste inchangé... #}
-
-    <!-- Mets ici le reste de ton code HTML (client, table articles, totaux, historique paiement, notes, boutons PDF...) -->
-
-</div>
 
     <div class="row mt-4">
         <div class="col-md-6">
@@ -96,43 +88,43 @@
         </table>
     </div>
 
-    <div class="row totals-section">
-        <div class="col-md-6 offset-md-6">
-            <p><strong>Total HTVA :</strong> <span class="float-end">{{ invoice.total_amount_htva|floatformat:2 }} €</span></p>
-            <p><strong>TVA ({{ invoice.vat_percentage|floatformat:2 }} %) :</strong> <span class="float-end">{{ invoice.vat_amount|floatformat:2 }} €</span></p>
-            <hr>
-            <h4 class="fw-bold"><strong>Total TTC :</strong> <span class="float-end">{{ invoice.total_amount_ttc|floatformat:2 }} €</span></h4>
-            
-            <p class="text-success"><strong>Montant Payé :</strong> <span class="float-end">- {{ invoice.get_total_paid|floatformat:2 }} €</span></p>
-            <h4 class="fw-bold"><strong>Solde Restant Dû :</strong> <span class="float-end">{{ invoice.balance_due|floatformat:2 }} €</span></h4>
+    <div id="invoice-totals-ajax">
+        {% include "documents/_invoice_totals.html" %}
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form id="add-payment-ajax-form" data-invoice-id="{{ invoice.id }}">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col">
+                        <input type="number" step="0.01" min="0" name="amount_paid" required class="form-control" placeholder="Montant payé">
+                    </div>
+                    <div class="col">
+                        <input type="date" name="payment_date" class="form-control" value="{{ today|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col">
+                        <select name="payment_method" class="form-select">
+                            {% for code, name in invoice.payments.model.PaymentMethod.choices %}
+                            <option value="{{ code }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col">
+                        <input type="text" name="reference" class="form-control" placeholder="Référence (facultatif)">
+                    </div>
+                    <div class="col">
+                        <button type="submit" class="btn btn-primary">Ajouter Paiement</button>
+                    </div>
+                </div>
+                <div id="payment-form-errors" class="text-danger small mt-2"></div>
+            </form>
         </div>
     </div>
 
-    {% if invoice.payments.all %}
-    <h2 class="mt-4 h4">Historique des Paiements</h2>
-    <div class="table-responsive">
-        <table class="table table-sm table-bordered">
-            <thead class="table-light">
-                <tr>
-                    <th>Date du Paiement</th>
-                    <th>Méthode</th>
-                    <th>Référence</th>
-                    <th class="text-end">Montant Payé</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for payment in invoice.payments.all %}
-                <tr>
-                    <td>{{ payment.payment_date|date:"d/m/Y" }}</td>
-                    <td>{{ payment.get_payment_method_display }}</td>
-                    <td>{{ payment.reference|default:"-" }}</td>
-                    <td class="text-end">{{ payment.amount_paid|floatformat:2 }} €</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div id="payments-table-ajax">
+        {% include "documents/_payments_table.html" %}
     </div>
-    {% endif %}
 
     {% if invoice.notes %}
     <div class="card mt-4">
@@ -145,18 +137,143 @@
 
     <div class="mt-4 text-center">
         <a href="{% url 'documents:view_invoice_pdf' invoice.id %}" target="_blank" class="btn btn-success btn-lg">Télécharger PDF</a>
-        
+
+        {% if invoice.client.email %}
+        <form method="post" action="{% url 'documents:send_invoice_email' invoice.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary btn-lg ms-2">
+                📧 Envoyer par email au client
+            </button>
+        </form>
+        {% else %}
+            <span class="ms-2 text-danger">Aucune adresse email pour ce client</span>
+        {% endif %}
+
         {% if invoice.status != 'Annulée' %}
             <a href="{% url 'documents:create_credit_note_from_invoice' invoice.id %}" class="btn btn-warning btn-lg ms-2">Créer Note de Crédit</a>
-        {% endif %}
-        
-        <!-- Formulaire pour changer le statut -->
-        {% if invoice.status != 'Annulée' %}
-            <form method="POST" action="{% url 'documents:update_invoice_status' invoice.id %}" class="d-inline">
-                {% csrf_token %}
-                </div>
-            </form>
         {% endif %}
     </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+// CSRF utils Django
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('add-payment-ajax-form');
+    const errorsDiv = document.getElementById('payment-form-errors');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            errorsDiv.innerHTML = '';
+            const invoiceId = form.getAttribute('data-invoice-id');
+            const url = `/documents/invoice/${invoiceId}/ajax_add_payment/`;
+            const data = new FormData(form);
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken
+                },
+                body: data,
+            })
+            .then(res => res.json())
+            .then(resp => {
+                if (resp.success) {
+                    document.getElementById('payments-table-ajax').innerHTML = resp.payments_html;
+                    document.getElementById('invoice-totals-ajax').innerHTML = resp.totals_html;
+                    form.reset();
+                    if (resp.status) {
+                        let badgeHtml = '';
+                        switch(resp.status) {
+                            case 'Payée':
+                                badgeHtml = '<span class="badge bg-success fs-6">Payée</span>'; break;
+                            case 'En retard':
+                                badgeHtml = '<span class="badge bg-danger fs-6">En retard</span>'; break;
+                            case 'Envoyée':
+                                badgeHtml = '<span class="badge bg-primary fs-6">Envoyée</span>'; break;
+                            case 'Annulée':
+                                badgeHtml = '<span class="badge bg-secondary fs-6">Annulée</span>'; break;
+                            default:
+                                badgeHtml = '<span class="badge bg-light text-dark border fs-6">'+resp.status+'</span>';
+                        }
+                        document.getElementById('invoice-status-badge').innerHTML = badgeHtml;
+                    }
+                } else if (resp.errors) {
+                    for (const field in resp.errors) {
+                        errorsDiv.innerHTML += resp.errors[field].join('<br>') + '<br>';
+                    }
+                } else if (resp.error) {
+                    errorsDiv.textContent = resp.error;
+                }
+            });
+        });
+    }
+
+    // Suppression paiement AJAX (déléguée)
+    document.body.addEventListener('submit', function(e) {
+        const form = e.target;
+        if (form.classList.contains('delete-payment-ajax-form')) {
+            e.preventDefault();
+            if (!form.hasAttribute('data-confirmed')) {
+                if (!confirm('Supprimer ce paiement ?')) return false;
+                form.setAttribute('data-confirmed', '1');
+            }
+            const paymentId = form.getAttribute('data-payment-id');
+            const invoiceId = document.getElementById('add-payment-ajax-form').getAttribute('data-invoice-id');
+            const url = `/documents/payment/${paymentId}/ajax_delete/`;
+            const data = new FormData(form);
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken
+                },
+                body: data
+            })
+            .then(res => res.json())
+            .then(resp => {
+                if (resp.success) {
+                    document.getElementById('payments-table-ajax').innerHTML = resp.payments_html;
+                    document.getElementById('invoice-totals-ajax').innerHTML = resp.totals_html;
+                    if (resp.status) {
+                        let badgeHtml = '';
+                        switch(resp.status) {
+                            case 'Payée':
+                                badgeHtml = '<span class="badge bg-success fs-6">Payée</span>'; break;
+                            case 'En retard':
+                                badgeHtml = '<span class="badge bg-danger fs-6">En retard</span>'; break;
+                            case 'Envoyée':
+                                badgeHtml = '<span class="badge bg-primary fs-6">Envoyée</span>'; break;
+                            case 'Annulée':
+                                badgeHtml = '<span class="badge bg-secondary fs-6">Annulée</span>'; break;
+                            default:
+                                badgeHtml = '<span class="badge bg-light text-dark border fs-6">'+resp.status+'</span>';
+                        }
+                        document.getElementById('invoice-status-badge').innerHTML = badgeHtml;
+                    }
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}
+

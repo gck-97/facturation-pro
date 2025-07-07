@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="quote-public" style="max-width: 800px; margin: 30px auto; padding: 32px; background: #fff; border-radius: 18px; box-shadow: 0 3px 24px rgba(0,0,0,0.09);">
+    <h1 style="color: #006178; margin-bottom: 20px;">Devis {{ quote.quote_number }}</h1>
+    <p><b>Client :</b> {{ quote.client.nom }}</p>
+    <p><b>Date :</b> {{ quote.issue_date|date:"d/m/Y" }}</p>
+    <p><b>Montant total :</b> {{ quote.total_amount_ttc }} €</p>
+    <hr style="margin: 24px 0;">
+    <h3>Détails</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th style="text-align:left; border-bottom:1px solid #bbb;">Description</th>
+                <th style="text-align:right; border-bottom:1px solid #bbb;">Quantité</th>
+                <th style="text-align:right; border-bottom:1px solid #bbb;">Prix unitaire</th>
+                <th style="text-align:right; border-bottom:1px solid #bbb;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in quote.items.all %}
+            <tr>
+                <td>{{ item.description }}</td>
+                <td style="text-align:right;">{{ item.quantity }}</td>
+                <td style="text-align:right;">{{ item.unit_price_htva }} €</td>
+                <td style="text-align:right;">{{ item.total_line_htva }} €</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 28px; text-align: right;">
+        <a href="{% url 'documents:quote_public_pdf' quote.public_token %}" class="btn btn-success" style="background:#158c3c; color:#fff; padding:10px 20px; border-radius:6px; text-decoration:none; font-size:1.1em;">
+            Télécharger le devis PDF
+        </a>
+        <!-- Ici bouton Accepter (inactif pour l’instant, à activer plus tard) -->
+        <button disabled style="margin-left:20px; padding:10px 20px; border-radius:6px; background:#fbbc04; color:#333; border:none; font-size:1.1em; cursor:not-allowed; opacity:0.7;">
+            Accepter ce devis (prochainement)
+        </button>
+    </div>
+</div>
+{% endblock %}

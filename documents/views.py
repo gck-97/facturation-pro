@@ -2,15 +2,19 @@ import json
 from datetime import timedelta
 
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.db import transaction
 from django.utils import timezone
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.template.loader import render_to_string
+from django.core.mail import EmailMessage
+from django.urls import reverse
 
 from products.models import Product
 from .models import Invoice, InvoiceItem, Quote, QuoteItem, Payment, CreditNote, CreditNoteItem, Client
-from .forms import QuoteForm, QuoteItemFormset, InvoiceForm, InvoiceItemFormset
+from .forms import QuoteForm, QuoteItemFormset, InvoiceForm, InvoiceItemFormset, PaymentForm
 from .utils import generate_invoice_pdf, generate_quote_pdf, generate_credit_note_pdf
 
 # --- Vues pour les Factures (Invoices) ---
@@ -42,6 +46,39 @@ def view_invoice_pdf(request, invoice_id):
     response['Content-Disposition'] = f'attachment; filename="facture_{invoice.invoice_number}.pdf"'
     return response
 
+@login_required
+def send_invoice_email_view(request, invoice_id):
+    invoice = get_object_or_404(Invoice, id=invoice_id, user=request.user)
+    if not invoice.client.email:
+        messages.error(request, "Ce client n'a pas d'adresse email.")
+        return redirect('documents:invoice_detail', invoice_id=invoice.id)
+    public_url = request.build_absolute_uri(
+        reverse('documents:invoice_public_view', args=[str(invoice.public_token)])
+    )
+
+    # Nom affiché dans le mail ("Giuseppe Cirino via MonSite" <giuseppecirino@outlook.be>)
+    user_display_name = request.user.get_full_name() or request.user.username
+    site_name = "Facturation Pro"
+    from_email = 'giuseppecirino@outlook.be'
+
+
+    subject = f"Votre facture {invoice.invoice_number}"
+    message = (
+        f"Bonjour,\n\nVeuillez trouver votre facture en ligne : {public_url}\n\n"
+        "Merci pour votre confiance !"
+    )
+
+    email = EmailMessage(
+        subject=subject,
+        body=message,
+        from_email=from_email,
+        to=[invoice.client.email],
+        reply_to=[request.user.email],
+    )
+    email.send(fail_silently=False)
+    messages.success(request, "La facture a été envoyée par email au client !")
+    return redirect('documents:invoice_detail', invoice_id=invoice.id)
+
 # --- Vues pour les Devis (Quotes) ---
 
 @login_required
@@ -70,6 +107,38 @@ def view_quote_pdf(request, quote_id):
     response = HttpResponse(pdf_content, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="devis_{quote.quote_number}.pdf"'
     return response
+
+@login_required
+def send_quote_email_view(request, quote_id):
+    quote = get_object_or_404(Quote, id=quote_id, user=request.user)
+    if not quote.client.email:
+        messages.error(request, "Ce client n'a pas d'adresse email.")
+        return redirect('documents:quote_detail', quote_id=quote.id)
+    public_url = request.build_absolute_uri(
+        reverse('documents:quote_public_view', args=[str(quote.public_token)])
+    )
+
+    user_display_name = request.user.get_full_name() or request.user.username
+    site_name = "Facturation Pro"
+    from_email = 'giuseppecirino@outlook.be'
+
+
+    subject = f"Votre devis {quote.quote_number}"
+    message = (
+        f"Bonjour,\n\nVeuillez trouver votre devis en ligne : {public_url}\n\n"
+        "N'hésitez pas à nous contacter pour toute question.\n\nMerci pour votre confiance !"
+    )
+
+    email = EmailMessage(
+        subject=subject,
+        body=message,
+        from_email=from_email,
+        to=[quote.client.email],
+        reply_to=[request.user.email],
+    )
+    email.send(fail_silently=False)
+    messages.success(request, "Le devis a été envoyé par email au client !")
+    return redirect('documents:quote_detail', quote_id=quote.id)
 
 @login_required
 def quote_create(request):
@@ -132,6 +201,38 @@ def view_credit_note_pdf(request, credit_note_id):
     response = HttpResponse(pdf_content, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="note_de_credit_{credit_note.credit_note_number}.pdf"'
     return response
+
+@login_required
+def send_credit_note_email_view(request, credit_note_id):
+    credit_note = get_object_or_404(CreditNote, id=credit_note_id, user=request.user)
+    if not credit_note.client.email:
+        messages.error(request, "Ce client n'a pas d'adresse email.")
+        return redirect('documents:credit_note_detail', credit_note_id=credit_note.id)
+    public_url = request.build_absolute_uri(
+        reverse('documents:view_credit_note_pdf', args=[str(credit_note.id)])
+    )
+
+    user_display_name = request.user.get_full_name() or request.user.username
+    site_name = "Facturation Pro"
+    from_email = 'giuseppecirino@outlook.be'
+
+
+    subject = f"Votre note de crédit {credit_note.credit_note_number}"
+    message = (
+        f"Bonjour,\n\nVeuillez trouver votre note de crédit ici : {public_url}\n\n"
+        "N'hésitez pas à nous contacter pour toute question.\n\nMerci pour votre confiance !"
+    )
+
+    email = EmailMessage(
+        subject=subject,
+        body=message,
+        from_email=from_email,
+        to=[credit_note.client.email],
+        reply_to=[request.user.email],
+    )
+    email.send(fail_silently=False)
+    messages.success(request, "La note de crédit a été envoyée par email au client !")
+    return redirect('documents:credit_note_detail', credit_note_id=credit_note.id)
 
 # --- Vues pour les Actions (Conversions) ---
 
@@ -233,11 +334,14 @@ def update_invoice_status(request, invoice_id):
     invoice = get_object_or_404(Invoice, id=invoice_id, user=request.user)
     if request.method == 'POST':
         new_status = request.POST.get('status')
-        # Correction ici !
         if new_status in Invoice.InvoiceStatus.values:
-            invoice.status = new_status
-            invoice.save()
-            messages.success(request, f"Le statut de la facture N°{invoice.invoice_number} a été mis à jour.")
+            # Si solde restant > 0, forcer statut à "Envoyée"
+            if new_status == Invoice.InvoiceStatus.PAID and invoice.balance_due > 0:
+                messages.warning(request, "Impossible de marquer comme Payée : solde restant dû non nul.")
+            else:
+                invoice.status = new_status
+                invoice.save()
+                messages.success(request, f"Le statut de la facture N°{invoice.invoice_number} a été mis à jour.")
         else:
             messages.error(request, "Statut invalide.")
         return redirect('documents:invoice_detail', invoice_id=invoice.id)
@@ -267,3 +371,102 @@ def update_credit_note_status(request, credit_note_id):
         else:
             messages.error(request, "Statut invalide.")
         return redirect('documents:credit_note_detail', credit_note_id=credit_note.id)
+
+# --- Paiement standard (formulaire page à part, rarement utilisé si AJAX ok) ---
+
+@login_required
+def add_payment(request, invoice_id):
+    invoice = get_object_or_404(Invoice, pk=invoice_id, user=request.user)
+    if request.method == 'POST':
+        form = PaymentForm(request.POST)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.invoice = invoice
+            payment.save()
+            messages.success(request, "Le paiement a bien été ajouté.")
+            return redirect('documents:invoice_detail', invoice_id=invoice.id)
+        else:
+            messages.error(request, "Erreur dans le formulaire de paiement.")
+    else:
+        form = PaymentForm()
+    return render(request, 'documents/add_payment.html', {'form': form, 'invoice': invoice})
+
+# --- Suppression standard ---
+
+@login_required
+def delete_payment(request, payment_id):
+    payment = get_object_or_404(Payment, id=payment_id)
+    invoice = payment.invoice
+    invoice_id = invoice.id
+
+    if request.method == "POST":
+        payment.delete()
+        invoice.update_status_based_on_payments()
+        messages.success(request, "Le paiement a bien été supprimé.")
+        return redirect('documents:invoice_detail', invoice_id=invoice_id)
+    return redirect('documents:invoice_detail', invoice_id=invoice_id)
+
+# --- AJOUT PAIEMENT AJAX ---
+
+@login_required
+def ajax_add_payment(request, invoice_id):
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        invoice = get_object_or_404(Invoice, pk=invoice_id, user=request.user)
+        form = PaymentForm(request.POST)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.invoice = invoice
+            payment.save()
+            invoice.update_status_based_on_payments()
+            # On prépare le rendu des fragments HTML
+            totals_html = render_to_string('documents/_invoice_totals.html', {'invoice': invoice})
+            payments_html = render_to_string('documents/_payments_table.html', {'invoice': invoice})
+            return JsonResponse({'success': True, 'totals_html': totals_html, 'payments_html': payments_html, 'status': invoice.status})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
+    return JsonResponse({'success': False})
+
+# --- SUPPRESSION AJAX ---
+
+@login_required
+def ajax_delete_payment(request, payment_id):
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        payment = get_object_or_404(Payment, id=payment_id)
+        invoice = payment.invoice
+        payment.delete()
+        invoice.update_status_based_on_payments()
+        # ==> On s'assure de bien enregistrer le statut en base
+        invoice.save(update_fields=["status"])
+        totals_html = render_to_string('documents/_invoice_totals.html', {'invoice': invoice})
+        payments_html = render_to_string('documents/_payments_table.html', {'invoice': invoice})
+        return JsonResponse({'success': True, 'totals_html': totals_html, 'payments_html': payments_html, 'status': invoice.status})
+    return JsonResponse({'success': False})
+
+
+def invoice_public_view(request, public_token):
+    invoice = get_object_or_404(Invoice, public_token=public_token)
+    # Tu peux ajouter des contrôles d’accès ici si besoin (ex : désactiver le lien après paiement, etc.)
+    return render(request, 'documents/invoice_public_view.html', {
+        'invoice': invoice
+    })
+
+
+def invoice_public_pdf(request, public_token):
+    invoice = get_object_or_404(Invoice, public_token=public_token)
+    pdf_content = generate_invoice_pdf(invoice, invoice.user.company_profile)
+    response = HttpResponse(pdf_content, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="facture_{invoice.invoice_number}.pdf"'
+    return response
+
+def quote_public_view(request, public_token):
+    quote = get_object_or_404(Quote, public_token=public_token)
+    return render(request, 'documents/quote_public_view.html', {
+        'quote': quote
+    })
+
+def quote_public_pdf(request, public_token):
+    quote = get_object_or_404(Quote, public_token=public_token)
+    pdf_content = generate_quote_pdf(quote, quote.user.company_profile)
+    response = HttpResponse(pdf_content, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="devis_{quote.quote_number}.pdf"'
+    return response

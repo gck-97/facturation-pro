@@ -110,6 +110,17 @@
     <div class="mt-4 text-center">
         <a href="{% url 'documents:view_quote_pdf' quote.id %}" target="_blank" class="btn btn-success">Télécharger PDF du Devis</a>
         
+        {% if quote.client.email %}
+        <form method="post" action="{% url 'documents:send_quote_email' quote.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary ms-2">
+                📧 Envoyer par email au client
+            </button>
+        </form>
+        {% else %}
+            <span class="ms-2 text-danger">Aucune adresse email pour ce client</span>
+        {% endif %}
+
         {% if quote.status == 'Accepté' %}
             <a href="{% url 'documents:convert_quote_to_invoice' quote.id %}" class="btn btn-primary ms-2">Convertir en Facture</a>
         {% elif quote.status != 'Converti' %}

@@ -98,7 +98,18 @@
 
         <div class="card-footer text-center">
             <a href="{% url 'documents:view_credit_note_pdf' credit_note.id %}" target="_blank" class="btn btn-success">Télécharger PDF</a>
+            {% if credit_note.client.email %}
+            <form method="post" action="{% url 'documents:send_credit_note_email' credit_note.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary ms-2">
+                    📧 Envoyer par email au client
+                </button>
+            </form>
+            {% else %}
+                <span class="ms-2 text-danger">Aucune adresse email pour ce client</span>
+            {% endif %}
         </div>
     </div>
 </div>
 {% endblock %}
+
