@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.template.loader import render_to_string
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.urls import reverse
 
 from products.models import Product
@@ -124,21 +124,47 @@ def send_quote_email_view(request, quote_id):
 
 
     subject = f"Votre devis {quote.quote_number}"
-    message = (
-        f"Bonjour,\n\nVeuillez trouver votre devis en ligne : {public_url}\n\n"
+
+    accept_url = request.build_absolute_uri(reverse('documents:quote_accept', args=[str(quote.public_token)]))
+    reject_url = request.build_absolute_uri(reverse('documents:quote_reject', args=[str(quote.public_token)]))
+    public_url = request.build_absolute_uri(reverse('documents:quote_public_view', args=[str(quote.public_token)]))
+
+    user_display_name = request.user.get_full_name() or request.user.username
+    site_name = "Facturation Pro"
+    from_email = f'{user_display_name} via {site_name} <giuseppecirino@outlook.be>'
+
+    text_content = (
+        f"Bonjour,\n\n"
+        f"Veuillez trouver votre devis en ligne : {public_url}\n\n"
+        f"Pour accepter le devis : {accept_url}\n"
+        f"Pour refuser le devis : {reject_url}\n\n"
         "N'hésitez pas à nous contacter pour toute question.\n\nMerci pour votre confiance !"
     )
 
-    email = EmailMessage(
+    html_content = f"""
+    <p>Bonjour,</p>
+    <p>Veuillez trouver votre devis en ligne : <a href="{public_url}">Voir le devis</a></p>
+    <p>
+        <a href="{accept_url}" style="padding:10px 20px;background:green;color:white;text-decoration:none;border-radius:5px;">✅ J'accepte le devis</a>
+        &nbsp;
+        <a href="{reject_url}" style="padding:10px 20px;background:#eee;color:#111;text-decoration:none;border-radius:5px;">❌ Je refuse</a>
+    </p>
+    <p>N'hésitez pas à nous contacter pour toute question.</p>
+    <p>Merci pour votre confiance !</p>
+    """
+
+    email = EmailMultiAlternatives(
         subject=subject,
-        body=message,
+        body=text_content,
         from_email=from_email,
         to=[quote.client.email],
         reply_to=[request.user.email],
     )
+    email.attach_alternative(html_content, "text/html")
     email.send(fail_silently=False)
     messages.success(request, "Le devis a été envoyé par email au client !")
     return redirect('documents:quote_detail', quote_id=quote.id)
+
 
 @login_required
 def quote_create(request):
@@ -470,3 +496,37 @@ def quote_public_pdf(request, public_token):
     response = HttpResponse(pdf_content, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="devis_{quote.quote_number}.pdf"'
     return response
+
+def quote_accept_view(request, public_token):
+    quote = get_object_or_404(Quote, public_token=public_token)
+    if quote.status == Quote.QuoteStatus.ACCEPTED:
+        confirmation = "Ce devis a déjà été accepté."
+    elif quote.status == Quote.QuoteStatus.REJECTED:
+        confirmation = "Ce devis a déjà été refusé."
+    else:
+        quote.status = Quote.QuoteStatus.ACCEPTED
+        quote.save(update_fields=["status", "updated_at"])
+        confirmation = "Merci, vous avez accepté ce devis !"
+
+    return render(request, "documents/quote_response.html", {
+        "quote": quote,
+        "confirmation": confirmation,
+        "status": "accepted"
+    })
+
+def quote_reject_view(request, public_token):
+    quote = get_object_or_404(Quote, public_token=public_token)
+    if quote.status == Quote.QuoteStatus.REJECTED:
+        confirmation = "Ce devis a déjà été refusé."
+    elif quote.status == Quote.QuoteStatus.ACCEPTED:
+        confirmation = "Ce devis a déjà été accepté."
+    else:
+        quote.status = Quote.QuoteStatus.REJECTED
+        quote.save(update_fields=["status", "updated_at"])
+        confirmation = "Vous avez refusé ce devis."
+
+    return render(request, "documents/quote_response.html", {
+        "quote": quote,
+        "confirmation": confirmation,
+        "status": "rejected"
+    })

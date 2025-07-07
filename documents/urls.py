@@ -45,6 +45,8 @@ urlpatterns = [
 
     # Vues publiques pour note de crédit (optionnel, utile pour lien mail)
     path('credit-note/<int:credit_note_id>/public/pdf/', views.view_credit_note_pdf, name='credit_note_public_pdf'),
-    # ou tu pourrais faire (plus propre si tu ajoutes un public_token sur CreditNote) :
-    # path('credit-note/public/<uuid:public_token>/pdf/', views.credit_note_public_pdf, name='credit_note_public_pdf'),
+
+    path('quote/accept/<uuid:public_token>/', views.quote_accept_view, name='quote_accept'),
+    path('quote/reject/<uuid:public_token>/', views.quote_reject_view, name='quote_reject'),
+
 ]
