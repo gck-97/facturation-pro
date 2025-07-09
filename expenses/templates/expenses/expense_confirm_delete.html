@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5" style="max-width:500px;">
+  <h3>Supprimer ce frais ?</h3>
+  <p><strong>{{ expense.title }}</strong> du {{ expense.date|date:"d/m/Y" }} pour <b>{{ expense.amount }} €</b></p>
+  <form method="post">{% csrf_token %}
+    <div class="d-flex justify-content-between">
+      <a href="{% url 'expenses:expense_list' %}" class="btn btn-outline-secondary">Annuler</a>
+      <button type="submit" class="btn btn-danger">Supprimer</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

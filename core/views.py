@@ -11,6 +11,9 @@ from django.db.models import Sum
 from datetime import date
 from django.contrib.auth import logout
 from django.shortcuts import redirect
+from expenses.models import Expense
+from django.utils import timezone
+
 
 
 @login_required
@@ -40,11 +43,25 @@ def dashboard(request):
         status__in=[Quote.QuoteStatus.SENT, Quote.QuoteStatus.DRAFT]
     ).count()
 
+    # 4. Frais d’entreprise (ce mois)
+    today = timezone.now().date()
+    frais_du_mois = Expense.objects.filter(
+        user=request.user,
+        date__month=today.month,
+        date__year=today.year
+    )
+    total_frais = frais_du_mois.aggregate(Sum('amount'))['amount__sum'] or 0
+    nombre_frais = frais_du_mois.count()
+    dernier_frais = frais_du_mois.order_by('-date').first()
+
     context = {
         'page_title': 'Tableau de Bord',
         'overdue_invoices_count': overdue_invoices_count,
         'total_unpaid_amount': total_unpaid_amount,
         'pending_quotes_count': pending_quotes_count,
+        'total_frais': total_frais,
+        'nombre_frais': nombre_frais,
+        'dernier_frais': dernier_frais,
     }
     return render(request, 'core/dashboard.html', context)
 

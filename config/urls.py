@@ -31,6 +31,7 @@ urlpatterns = [
     path('clients/', include('clients.urls')),
     path('products/', include('products.urls')),
     path('documents/', include('documents.urls')),
+    path('frais/', include('expenses.urls')),
     # URL de connexion
     path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
     

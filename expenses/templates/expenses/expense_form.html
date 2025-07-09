@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        {% if form.instance.pk %}Modifier le frais{% else %}Ajouter un frais d’entreprise{% endif %}
+                    </h4>
+                </div>
+                <form method="post" enctype="multipart/form-data" class="card-body">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
+                    <div class="mb-3">
+                        <label for="id_label" class="form-label">Objet / Motif du frais</label>
+                        {{ form.label }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_amount" class="form-label">Montant (€)</label>
+                        <div class="input-group">
+                            {{ form.amount }}
+                            <span class="input-group-text">€</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_receipt" class="form-label">
+                            Photo du justificatif <small class="text-muted">(prendre en photo ou téléverser)</small>
+                        </label>
+                        {{ form.receipt }}
+                        {% if form.instance.receipt %}
+                            <div class="mt-2">
+                                <img src="{{ form.instance.receipt.url }}" alt="Justificatif" class="img-thumbnail" style="max-width:140px;">
+                                <a href="{{ form.instance.receipt.url }}" class="btn btn-link btn-sm" target="_blank">Voir en grand</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'expenses:expense_list' %}" class="btn btn-outline-secondary">Annuler</a>
+                        <button type="submit" class="btn btn-primary">
+                            {% if form.instance.pk %}Enregistrer les modifications{% else %}Ajouter le frais{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
