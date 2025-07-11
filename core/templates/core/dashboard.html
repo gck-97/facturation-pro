@@ -48,4 +48,28 @@
         </div>
     </div>
 
+    
+    <h2 class="h4 mt-4">Accès Rapide</h2>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Factures</h5>
+                    <p class="card-text">Consultez la liste de vos factures ou créez-en une nouvelle.</p>
+                    <a href="{% url 'documents:invoice_list' %}" class="btn btn-secondary">Voir la liste</a>
+                    <a href="{% url 'documents:invoice_create' %}" class="btn btn-primary">Créer une Facture</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Devis</h5>
+                    <p class="card-text">Consultez la liste de vos devis ou créez-en un nouveau.</p>
+                    <a href="{% url 'documents:quote_list' %}" class="btn btn-secondary">Voir la liste</a>
+                    <a href="{% url 'documents:quote_create' %}" class="btn btn-primary">Créer un Devis</a>
+                </div>
+            </div>
+        </div>
+
 {% endblock %}
